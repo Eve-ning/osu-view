@@ -15,7 +15,7 @@ docker compose \
        -f ../osu-tools.override.yml \
        --env-file .env \
        --env-file ../osu-tools.env \
-       up -d --build
+       up -d
 
 cd ..
 
