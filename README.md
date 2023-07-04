@@ -3,8 +3,8 @@
 A project suite on osu! related tools for building data science solutions.
 
 **osu!View** is:
-- [osu!Data on Docker](https://github.com/Eve-ning/osu-data-docker)
-- [osu!Tools on Docker](https://github.com/Eve-ning/osu-tools-docker)
+- [osu! Data on Docker](https://github.com/Eve-ning/osu-data-docker)
+- [osu! Tools on Docker](https://github.com/Eve-ning/osu-tools-docker)
 
 ## Get Started
 
