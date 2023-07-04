@@ -1,0 +1,6 @@
+[submodule "osu-data-docker"]
+	path = osu-data-docker
+	url = https://github.com/Eve-ning/osu-data-docker.git
+[submodule "osu-tools-docker"]
+	path = osu-tools-docker
+	url = https://github.com/Eve-ning/osu-tools-docker.git
