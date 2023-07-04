@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+
+  osu.mysql:
+    volumes:
+      - ../osu.view:/osu.view
+
+  osu.files:
+    volumes:
+      - ../osu.view:/osu.view
