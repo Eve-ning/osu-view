@@ -3,4 +3,4 @@ version: "3.8"
 services:
   osu.tools:
     volumes:
-      - ./osu.view:/osu.view
+      - ../osu.view:/osu.view
