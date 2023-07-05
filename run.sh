@@ -6,7 +6,7 @@ docker compose \
        -f ../osu-data.override.yml \
        --env-file .env \
        --env-file ../osu-data.env \
-       up -d
+       up -d --build
 
 echo "Starting osu-tools-docker"
 cd ../osu-tools-docker || exit 1
@@ -15,7 +15,7 @@ docker compose \
        -f ../osu-tools.override.yml \
        --env-file .env \
        --env-file ../osu-tools.env \
-       up -d
+       up -d --build
 
 cd ..
 
