@@ -3,6 +3,8 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+WORKDIR=osu.view/sr-calc/"$1"
+
 if [ ! "$2" == "" ]; then
   FILES_DIR="$2"
   CUSTOM_FILES=1
@@ -16,11 +18,13 @@ else
   CUSTOM_FILES=0
 fi
 
-WORKDIR=osu.view/recalc-sr/"$1"
 FILELIST_PATH="$WORKDIR"/filelist.txt
 NT_RESULTS_PATH="$WORKDIR"/nt.results.json
 DT_RESULTS_PATH="$WORKDIR"/dt.results.json
 HT_RESULTS_PATH="$WORKDIR"/ht.results.json
+
+echo "Starting Services"
+./start.sh
 
 # Check if docker service osu.mysql is up
 if ! docker ps | grep osu.mysql >/dev/null; then
@@ -65,15 +69,15 @@ fi
 # Evaluate beatmaps via osu.tools
 docker exec osu.tools sh -c \
   '
-  echo "Evaluating Beatmaps (Normal Time)";
+  echo -n "Evaluating Beatmaps (Normal Time)";
   dotnet PerformanceCalculator.dll difficulty "/'"$FILES_DIR"'" -j -o "/'"$NT_RESULTS_PATH"'" >> /dev/null;
   echo "Exported to '"$NT_RESULTS_PATH"'";
 
-  echo "Evaluating Beatmaps (Double Time)";
+  echo -n "Evaluating Beatmaps (Double Time)";
   dotnet PerformanceCalculator.dll difficulty "/'"$FILES_DIR"'" -j -m dt -o "/'"$DT_RESULTS_PATH"'" >> /dev/null;
   echo "Exported to '"$DT_RESULTS_PATH"'";
 
-  echo "Evaluating Beatmaps (Half Time)";
+  echo -n "Evaluating Beatmaps (Half Time)";
   dotnet PerformanceCalculator.dll difficulty "/'"$FILES_DIR"'" -j -m ht -o "/'"$HT_RESULTS_PATH"'" >> /dev/null;
   echo "Exported to '"$HT_RESULTS_PATH"'";
   '
@@ -81,5 +85,8 @@ docker exec osu.tools sh -c \
 echo "Copying Over Configurations"
 cp ../../osu-data.env ../../"$WORKDIR"/osu-data.env
 cp ../../osu-tools.env ../../"$WORKDIR"/osu-tools.env
+
+echo "Stopping Services"
+./stop.sh
 
 echo "Completed."

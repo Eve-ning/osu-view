@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 COMPARE_WORKDIR = Path(__file__).parents[2] / 'osu.view/recalc-sr/col5-fix-sort/'
@@ -37,28 +38,4 @@ df = (
     .assign(delta=lambda x: x['sr_compare'] - x['sr_master'])
 )
 df_filter: pd.DataFrame = (df.loc[np.abs(df['delta']) > 0.01].sort_values('delta')[::-1])
-df_filter.reset_index()[['sr_master', 'sr_compare', 'mods', 'delta', 'beatmap']].round(2).to_clipboard(excel=True)
-
-# %%
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-
-sns.histplot(df.loc[np.abs(df['delta']) > 0.001, 'delta'])
-plt.xlabel("Change in SR")
-plt.ylabel("Number of Beatmaps")
-plt.title("Change of SR by #24109 & LN Fix & 1.3 HoldFactor")
-plt.show()
-
-# %%
-
-
-
-# %%
-sns.scatterplot(df, x='sr_master', y='delta', s=4)
-plt.xlabel("ppy/master SR")
-plt.ylabel("SR Delta")
-plt.title("Change of SR by #24109 & LN Fix & 1.3 HoldFactor")
-plt.show()
-
-# %%
+df_filter.reset_index()[['sr_master', 'sr_compare', 'mods', 'delta', 'beatmap']].round(2).to_markdown("results.md")

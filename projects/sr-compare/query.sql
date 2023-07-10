@@ -5,4 +5,5 @@ WHERE playmode = 3
     difficultyrating > 2.5
     )
   AND approved = 1
+LIMIT 10
 ;
