@@ -1,0 +1,44 @@
+version: "2.18.1"
+
+services:
+  osu.tools:
+    extends:
+      file: osu-tools-docker/docker-compose.yml
+      service: osu.tools
+    build:
+      args:
+        - OSU_GIT=https://github.com/ppy/osu
+        - OSU_GIT_BRANCH=master
+        - OSU_TOOLS_GIT=https://github.com/ppy/osu-tools
+        - OSU_TOOLS_GIT_BRANCH=master
+    volumes:
+      - ./osu.view:/osu.view
+
+  osu.mysql.dl:
+    extends:
+      file: osu-data-docker/docker-compose.yml
+      service: osu.mysql.dl
+    build:
+      args:
+        - FILE_NAME=https://data.ppy.sh/2023_06_01_performance_mania_top_1000.tar.bz2
+
+  osu.mysql:
+    extends:
+      file: osu-data-docker/docker-compose.yml
+      service: osu.mysql
+    volumes:
+      - ./osu.view:/osu.view
+
+  osu.files:
+    extends:
+      file: osu-data-docker/docker-compose.yml
+      service: osu.files
+    build:
+      args:
+        - FILE_NAME=https://data.ppy.sh/2023_06_01_osu_files.tar.bz2
+    volumes:
+      - ./osu.view:/osu.view
+
+volumes:
+  osu.mysql.vol:
+  osu.files.vol:
