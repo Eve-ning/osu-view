@@ -20,7 +20,7 @@ services:
       service: osu.mysql.dl
     build:
       args:
-        - FILE_NAME=https://data.ppy.sh/2023_06_01_performance_mania_top_1000.tar.bz2
+        - FILE_NAME=https://data.ppy.sh/2023_07_01_performance_mania_top_1000.tar.bz2
 
   osu.mysql:
     extends:
@@ -35,7 +35,7 @@ services:
       service: osu.files
     build:
       args:
-        - FILE_NAME=https://data.ppy.sh/2023_06_01_osu_files.tar.bz2
+        - FILE_NAME=https://data.ppy.sh/2023_07_01_osu_files.tar.bz2
     volumes:
       - ./osu.view:/osu.view
 
