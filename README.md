@@ -8,6 +8,9 @@ A project suite on osu! related tools for building data science solutions.
 
 ## Get Started
 
+**IMPORTANT**: osu! Data on Docker doesn't check the version of the files. If you're updating the data version, delete
+the volume, and it'll rebuild itself.
+
 You need Linux (for now)
 
 1) Edit the `.env` for each submodule. See each project for details on what the `.env` does.
