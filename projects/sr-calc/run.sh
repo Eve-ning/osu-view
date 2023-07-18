@@ -59,14 +59,32 @@ echo "Use an existing result-set's files or create a new result-set:"
 # We firstly find all directories in sr-calc which contain the `files` dir
 # Then reverse it, so that `cut` can take the element from the back
 # Reverse it again after cut.
-select opt in "[NEW]" $(find osu.view/sr-calc/ -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
+select opt in "[NEW]" "[External Directory]" \
+              $(find osu.view/sr-calc/ -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
   [ -n "${opt}" ] && break
 done
 
+# If New, we'll run the query, then extract matching files
 if [ "$opt" == "[NEW]" ]; then
   FILES_DIR="$RESULT_DIR"/files
   echo "Using new files dir $FILES_DIR"
   CUSTOM_FILES_DIR=0
+
+# If External, we'll skip the query and file copying, we'll just run difficulty on this new dir.
+elif [ "$opt" == "[External Directory]" ]; then
+  echo If you use a relative directory, you are at "$(pwd)"
+  read -r -p "Your *.osu files directory: " EXT_FILES_DIR
+  while [ ! -d "$EXT_FILES_DIR" ]; do
+    echo "$EXT_FILES_DIR" is not a directory
+    read -r -p "Your *.osu files directory: " EXT_FILES_DIR
+  done
+  echo "Found $(find "$EXT_FILES_DIR" -name "*.osu" | wc -l) *.osu files in $FILES_DIR"
+  FILES_DIR="$RESULT_DIR"/files
+  mkdir "$FILES_DIR"
+  echo "Copying over files from $EXT_FILES_DIR to $FILES_DIR/"
+  cp "$EXT_FILES_DIR"/*.osu "$FILES_DIR"/
+  CUSTOM_FILES_DIR=1
+# Else, we'll just use files from an existing result
 else
   FILES_DIR="osu.view/sr-calc/${opt}/files"
   CUSTOM_FILES_DIR=1
@@ -105,9 +123,6 @@ else
   echo "   - branch: $(grep OSU_TOOLS_GIT_BRANCH= "$PROJ_DIR"/docker-compose.yml | cut -d = -f 2 | head -1)"
 fi
 
-# Replace Directory if exists
-rm -rf "$RESULT_DIR"
-mkdir -p "$RESULT_DIR"
 
 # If we're not using custom files, we'll find them via query.
 if [ $CUSTOM_FILES_DIR -eq 0 ]; then
