@@ -20,6 +20,7 @@ jobs:
       - name: Runs Project
         working-directory: projects/sr-calc/
         run: |
+          chmod +x ./run.sh
           ./run.sh mytest << EOF
           1
           EOF
