@@ -18,7 +18,7 @@ jobs:
           submodules: 'true'
 
       - name: Runs Project
-        working-directory: project/sr-calc/
+        working-directory: projects/sr-calc/
         run: |
           ./run.sh mytest << EOF
           1
