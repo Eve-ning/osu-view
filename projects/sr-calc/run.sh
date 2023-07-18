@@ -33,6 +33,19 @@ echo -n "Navigating to Project Home: "
 cd ../../
 pwd
 
+if [ -d "$RESULT_DIR" ]; then
+  read -r -p "$RESULT_DIR exists, overwrite it? [y/N]: " OVERWRITE
+  if [ "$OVERWRITE" == "Y" ] || [ "$OVERWRITE" == "y" ]; then
+    # Replace Directory if exists
+    echo "Accepted Overwrite for $RESULT_DIR"
+    rm -rf "$RESULT_DIR"
+  else
+    echo "Denied Overwrite, exit early"
+    exit 1
+  fi
+fi
+mkdir -p "$RESULT_DIR"
+
 echo ""
 echo "Pulling a large amount of .osu files can be slow."
 echo "Reuse .osu files by another result-set if the query is the same!"
