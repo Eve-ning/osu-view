@@ -135,7 +135,10 @@ echo "Copying Over Configurations for Lineage"
 cp "$PROJ_DIR"/query.sql "$RESULT_DIR"/query.sql
 
 if [ $SERVICE_ENABLED -eq 0 ]; then
-  cp "$PROJ_DIR"/docker-compose.yml "$RESULT_DIR"/docker-compose.yml
+  cp "$PROJ_DIR"/docker-compose.yml "$RESULT_DIR"/
+  cp ./osu-data-docker/.env "$RESULT_DIR"/osu-data.env
+  cp ./osu-tools-docker/.env "$RESULT_DIR"/osu-tools.env
+  cp "$PROJ_DIR"/.env "$RESULT_DIR"/sr-calc.env
   echo "Stopping Services"
   docker compose \
     --project-directory ./ \
