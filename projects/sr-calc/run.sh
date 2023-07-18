@@ -79,6 +79,7 @@ else
     -f "$PROJ_DIR"/docker-compose.yml \
     --env-file ./osu-data-docker/.env \
     --env-file ./osu-tools-docker/.env \
+    --env-file "$PROJ_DIR"/.env \
     up --wait --build
 
   echo "Configurations: "
