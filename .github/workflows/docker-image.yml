@@ -18,6 +18,11 @@ jobs:
           submodules: 'true'
 
       - name: Runs Project
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         working-directory: projects/sr-calc/
         run: |
           chmod +x ./run.sh
