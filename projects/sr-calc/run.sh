@@ -32,7 +32,7 @@ fi
 PROJ_DIR="$(pwd)"
 RESULT_DIR=osu.view/sr-calc/"$1"
 
-echo -n "Navigating to Project Home: "
+echo -n -e "\e[34mNavigating to Project Home: \e[0m"
 cd ../../
 pwd
 
@@ -60,7 +60,7 @@ echo "Use an existing result-set's files or create a new result-set:"
 # Then reverse it, so that `cut` can take the element from the back
 # Reverse it again after cut.
 select opt in "[NEW]" "[External Directory]" \
-              $(find osu.view/sr-calc/ -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
+  $(find osu.view/sr-calc/ -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
   [ -n "${opt}" ] && break
 done
 
@@ -68,7 +68,7 @@ done
 if [ "$opt" == "[NEW]" ]; then
   FILES_DIR="$RESULT_DIR"/files
   echo "Using new files dir $FILES_DIR"
-  CUSTOM_FILES_DIR=0
+  CUSTOM_FILES=0
 
 # If External, we'll skip the query and file copying, we'll just run difficulty on this new dir.
 elif [ "$opt" == "[External Directory]" ]; then
@@ -83,12 +83,12 @@ elif [ "$opt" == "[External Directory]" ]; then
   mkdir "$FILES_DIR"
   echo "Copying over files from $EXT_FILES_DIR to $FILES_DIR/"
   cp "$EXT_FILES_DIR"/*.osu "$FILES_DIR"/
-  CUSTOM_FILES_DIR=1
+  CUSTOM_FILES=1
 # Else, we'll just use files from an existing result
 else
   FILES_DIR="osu.view/sr-calc/${opt}/files"
-  CUSTOM_FILES_DIR=1
-  echo "Using custom files dir $FILES_DIR"
+  CUSTOM_FILES=1
+  echo -e "\e[34mUsing custom files dir $FILES_DIR\e[0m"
   if [ ! -d "$FILES_DIR" ]; then
     echo "Files Directory does not exist."
     exit 1
@@ -102,11 +102,11 @@ HT_RESULTS_PATH="$RESULT_DIR"/ht.results.json
 
 # Check if docker service osu.mysql is up
 if docker ps | grep -q osu.mysql && docker ps | grep -q osu.files; then
-  SERVICE_ENABLED=1
-  echo "Services are already running, will use current services."
+  CUSTOM_SERVICES=1
+  echo -e "\e[33mServices are already running, will use current services.\e[0m"
 else
-  SERVICE_ENABLED=0
-  echo "Services not available, starting Services"
+  CUSTOM_SERVICES=0
+  echo -e "\e[33mServices not available, starting Services\e[0m"
   docker compose \
     --project-directory ./ \
     --profile files \
@@ -117,15 +117,14 @@ else
     up --wait --build
 
   echo "Configurations: "
-  echo " - /osu.git: $(grep OSU_GIT= "$PROJ_DIR"/docker-compose.yml | cut -d = -f 2 | head -1)"
-  echo "   - branch: $(grep OSU_GIT_BRANCH= "$PROJ_DIR"/docker-compose.yml | cut -d = -f 2 | head -1)"
-  echo " - /osu-tools.git: $(grep OSU_TOOLS_GIT= "$PROJ_DIR"/docker-compose.yml | cut -d = -f 2 | head -1)"
-  echo "   - branch: $(grep OSU_TOOLS_GIT_BRANCH= "$PROJ_DIR"/docker-compose.yml | cut -d = -f 2 | head -1)"
+  echo " - /osu.git: $(grep OSU_GIT= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
+  echo "   - branch: $(grep OSU_GIT_BRANCH= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
+  echo " - /osu-tools.git: $(grep OSU_TOOLS_GIT= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
+  echo "   - branch: $(grep OSU_TOOLS_GIT_BRANCH= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
 fi
 
-
 # If we're not using custom files, we'll find them via query.
-if [ $CUSTOM_FILES_DIR -eq 0 ]; then
+if [ $CUSTOM_FILES -eq 0 ]; then
   # Pull file list according to query
   MYSQL_PASSWORD=p@ssw0rd1
   docker exec osu.mysql mysql -u root --password="$MYSQL_PASSWORD" \
@@ -162,10 +161,16 @@ docker exec osu.tools sh -c \
   echo "Exported to '"$HT_RESULTS_PATH"'";
   '
 
-echo "Copying Over Configurations for Lineage"
-cp "$PROJ_DIR"/query.sql "$RESULT_DIR"/query.sql
+echo -e "\e[34mCopying Over Configurations for Lineage\e[0m"
+if [ $CUSTOM_FILES -eq 1 ]; then
+  echo -e "\e[33mAs you used a custom fileset, query.sql will not be copied over.\e[0m"
+else
+  cp "$PROJ_DIR"/query.sql "$RESULT_DIR"/query.sql
+fi
 
-if [ $SERVICE_ENABLED -eq 0 ]; then
+if [ $CUSTOM_SERVICES -eq 1 ]; then
+  echo -e "\e[33mAs you used a custom service, docker-compose.yml and .env files will not be copied over.\e[0m"
+else
   cp "$PROJ_DIR"/docker-compose.yml "$RESULT_DIR"/
   cp ./osu-data-docker/.env "$RESULT_DIR"/osu-data.env
   cp ./osu-tools-docker/.env "$RESULT_DIR"/osu-tools.env
@@ -178,8 +183,6 @@ if [ $SERVICE_ENABLED -eq 0 ]; then
     --env-file ./osu-data-docker/.env \
     --env-file ./osu-tools-docker/.env \
     stop
-else
-  echo "As you used a custom service, the docker-compose.yml will not be copied over."
 fi
 
-echo "Completed."
+echo -e "\e[32mCompleted.\e[0m"
