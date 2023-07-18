@@ -1,13 +1,16 @@
 #!/bin/bash
+
+# This script executes the .NET `difficulty` module in osu-tools on beatmaps.
+# Beatmaps evaluated can come from 3 sources
+#   1) From files in the `osu.files` service via a MySQL Query: `query.sql`
+#   2) From an external directory of *.osu files
+#   3) From an internal directory of *.osu files (from previous runs of this script).
+# The version of `osu-tools` and `osu` used depends on the `.env` file
 #
-# Executes `difficulty` of the osu-tools project on specified branches.
-# The beatmaps used depends on the query that pulls the beatmap_id.
-# Arg 1 is the working dir for outputs. osu.view/sr-calc/$1
+# Usage: $ ./run.sh [RUN_TAG]
+# The tag is used to identify the run, all results will be stored in $PROJECT/osu.view/sr-calc/[RUN_TAG]/
 #
-# Additionally, the script will prompt the user if they want to use an existing set of `.osu` files to infer from.
-# This is necessary as pulling `.osu` files is costly.
-#
-# If the docker services are already running, this will just use that.
+# If the docker services are already running, this will just use those services.
 # However, note that it can cause replication issues, as we're not in control of the environment spun up.
 #
 # E.g.
@@ -22,7 +25,7 @@
 #                        /osu-tools.env    osu-tools "
 
 if [ $# -eq 0 ]; then
-  echo "Specify a directory to save files"
+  echo "Specify a directory to save files. ./run.sh [RUN_TAG]"
   exit 1
 fi
 
