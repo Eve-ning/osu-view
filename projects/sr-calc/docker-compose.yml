@@ -29,4 +29,5 @@ services:
 
 volumes:
   osu.mysql.vol:
+  osu.mysql.dl.vol:
   osu.files.vol:
