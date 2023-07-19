@@ -25,10 +25,12 @@ jobs:
           1
           EOF
 
-      - name: Checks Project Files
+      - name: Assert Essential Project Files exist
         run: |
-          ls osu.view/sr-calc/mytest/
-          cat osu.view/sr-calc/mytest/nt.results.json
+          if [ ! -f osu.view/sr-calc/mytest/nt.results.json ]; then
+            echo Missing expected nt.results.json 
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@v3
         with:
