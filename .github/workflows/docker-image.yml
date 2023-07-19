@@ -28,3 +28,9 @@ jobs:
       - name: Checks Project Files
         run: |
           ls osu.view/sr-calc/mytest/
+          cat osu.view/sr-calc/mytest/nt.results.json
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Inferred Results
+          path: osu.view/sr-calc/mytest/
