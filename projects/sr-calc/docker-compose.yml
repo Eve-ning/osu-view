@@ -1,0 +1,33 @@
+version: "2.18.1"
+
+services:
+  osu.tools:
+    extends:
+      file: osu-tools-docker/docker-compose.yml
+      service: osu.tools
+    volumes:
+      - ./osu.view:/osu.view
+
+  osu.mysql.dl:
+    extends:
+      file: osu-data-docker/docker-compose.yml
+      service: osu.mysql.dl
+
+  osu.mysql:
+    extends:
+      file: osu-data-docker/docker-compose.yml
+      service: osu.mysql
+    volumes:
+      - ./osu.view:/osu.view
+
+  osu.files:
+    extends:
+      file: osu-data-docker/docker-compose.yml
+      service: osu.files
+    volumes:
+      - ./osu.view:/osu.view
+
+volumes:
+  osu.mysql.vol:
+  osu.mysql.dl.vol:
+  osu.files.vol:
