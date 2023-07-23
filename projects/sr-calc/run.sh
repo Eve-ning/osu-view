@@ -138,9 +138,7 @@ run_query() {
     -D osu -N -e "$SQL_QUERY" \
     >"$FILELIST_PATH"
 
-  # Get osu.files dir name dynamically
-  local OSU_FILES_DIRNAME=""
-  OSU_FILES_DIRNAME="$(docker exec osu.files ls)"
+  local OSU_FILES_DIRNAME="${DATASET_DATE}_osu_files"
 
   # Create a temporary directory to copy all files to send to tar.
   echo "Moving Files to /$FILES_DIR/"
