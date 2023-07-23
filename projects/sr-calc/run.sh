@@ -232,7 +232,7 @@ run() {
       echo -e "\e[33mServices are already running, will use current services.\e[0m"
     else
       CUSTOM_SERVICES=0
-      start_docker "$ENV_PATH" ""
+      start_docker "$ENV_PATH" "osu.mysql" "osu.files" "osu.tools"
     fi
   fi
 
