@@ -175,7 +175,7 @@ copy_configs() {
     cp "$PROJ_DIR"/docker-compose.yml "$RUN_DIR"/
     cp ./osu-data-docker/.env "$RUN_DIR"/osu-data.env
     cp ./osu-tools-docker/.env "$RUN_DIR"/osu-tools.env
-    cp "$ENV_PATH" "$RUN_DIR"/sr-calc.env
+    cp "$ENV_PATH" "$RUN_DIR"/.env
     echo "Stopping Services"
     stop_docker "$ENV_PATH"
   fi
