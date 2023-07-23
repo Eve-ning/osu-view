@@ -61,7 +61,7 @@ Examples:
       -z https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_osu_files.tar.bz2
 "
 
-while getopts "hv:r:d:o:t:y:z:e:" opt; do
+while getopts "hv:r:d:o:t:y:z:e:q:" opt; do
   case $opt in
   h)
     echo "$usage"
@@ -75,6 +75,7 @@ while getopts "hv:r:d:o:t:y:z:e:" opt; do
   y) DB_URL=$OPTARG ;;
   z) FILES_URL=$OPTARG ;;
   e) ENV_PATH=$OPTARG ;;
+  q) SQL_QUERY=$OPTARG ;;
   *)
     echo "Invalid Argument"
     exit 1
@@ -117,3 +118,13 @@ OSU_GIT=$OSU_GIT
 OSU_GIT_BRANCH=$OSU_GIT_BRANCH
 OSU_TOOLS_GIT=$OSU_TOOLS_GIT
 OSU_TOOLS_GIT_BRANCH=$OSU_TOOLS_GIT_BRANCH" >"$ENV_PATH"
+
+export VERSION
+export RUN_TAG
+export DATASET_DATE
+export OSU_GIT_OPTS
+export OSU_TOOLS_GIT_OPTS
+export DB_URL
+export FILES_URL
+export ENV_PATH
+export SQL_QUERY
