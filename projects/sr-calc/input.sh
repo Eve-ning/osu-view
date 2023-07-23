@@ -18,7 +18,7 @@ Options:
   -v     MODE_VERSION: E.g. 'osu_top_1000'.
          - MODE               is either 'osu', 'mania', 'catch' or 'taiko'.
          - VERSION            is either 'top_1000', 'top_10000' or 'random_10000'
-  -r     RUN_TAG              identifier of this run       Default: $(date '+%Y_%m_%d_%H_%M_%S') (Current Date Time)
+  -r     RUN_TAG              identifier of this run       Default: run_$(date '+%Y_%m_%d_%H_%M_%S') (Current Date Time)
   -d     DATA_DATE            in the format YYYY_MM_DD.    Default: $(date '+%Y_%m_01') (1st of this Month)
   -o (0) OSU_GIT              osu! game git link.          Default: https://github.com/ppy/osu
   -o (1) OSU_GIT_BRANCH       osu! game git branch name.   Default: master
