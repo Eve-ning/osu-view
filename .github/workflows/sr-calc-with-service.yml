@@ -20,12 +20,12 @@ jobs:
       - name: Start Service in osu-tools-docker
         working-directory: osu-tools-docker/
         run: |
-          docker-compose up --wait || exit 1
+          docker compose up --wait || exit 1
 
       - name: Start Service in osu-data-docker
         working-directory: osu-data-docker/
         run: |
-          docker-compose --env-file test/.test.env up --wait || exit 1
+          docker compose --env-file test/.test.env up --wait || exit 1
 
       - name: Runs initial, new test
         working-directory: projects/sr-calc/
