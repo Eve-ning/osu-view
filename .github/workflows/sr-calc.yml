@@ -1,4 +1,4 @@
-name: Project SR Calculation
+name: SR Calculation Tests
 
 on:
   pull_request:
@@ -29,10 +29,12 @@ jobs:
           1
           EOF
 
-      - name: Assert that results and files dir exist
+      - name: Assert that results, files, query, and env exist
         run: |
           if [ ! -f osu.view/sr-calc/mytest/nt.results.json ] || \
-             [ ! -d osu.view/sr-calc/mytest/files ]; then
+             [ ! -d osu.view/sr-calc/mytest/files ] || \
+             [ ! -f osu.view/sr-calc/mytest/query.sql ] || \
+             [ ! -f osu.view/sr-calc/mytest/.env ]; then
             exit 1
           fi
 
@@ -44,10 +46,12 @@ jobs:
           3
           EOF
 
-      - name: Assert that results and files dir don't exist
+      - name: Assert that only results and .env exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest2/nt.results.json ] ||
-             [ -d osu.view/sr-calc/mytest2/files ]; then
+          if [ ! -f osu.view/sr-calc/mytest2/nt.results.json ] || \
+             [ -d osu.view/sr-calc/mytest2/files ] || \
+             [ -f osu.view/sr-calc/mytest2/query.sql ] || \
+             [ ! -f osu.view/sr-calc/mytest2/.env ]; then
             exit 1
           fi
 
@@ -60,10 +64,12 @@ jobs:
           rsc/osu_files/
           EOF
 
-      - name: Assert that results and files dir don't exist
+      - name: Assert that only results, files and .env exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest3/nt.results.json ] ||
-             [ -d osu.view/sr-calc/mytest3/files ]; then
+          if [ ! -f osu.view/sr-calc/mytest3/nt.results.json ] || \
+             [ ! -d osu.view/sr-calc/mytest3/files ] || \
+             [ -f osu.view/sr-calc/mytest3/query.sql ] || \
+             [ ! -f osu.view/sr-calc/mytest3/.env ]; then
             exit 1
           fi
 
