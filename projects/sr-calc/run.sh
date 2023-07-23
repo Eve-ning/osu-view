@@ -80,7 +80,7 @@ select_result_dir() {
     while [ ! -d "$EXT_FILES_DIR" ]; do
       echo "$EXT_FILES_DIR" is not a directory
       read -r -p "Your *.osu files directory: " EXT_FILES_DIR
-      ((r++)) && ((r==10)) && exit 1
+      ((r++)) && ((r == 10)) && exit 1
     done
     echo "Found $(find "$EXT_FILES_DIR" -name "*.osu" | wc -l) *.osu files in $FILES_DIR"
     FILES_DIR="$RUN_DIR"/files
@@ -167,7 +167,9 @@ copy_configs() {
   local PROJ_DIR="$4"
   local ENV_PATH="$5"
 
-  echo "$SQL_QUERY" > "$RUN_DIR"/query.sql
+  if [ "$CUSTOM_FILES" -eq 0 ]; then
+    echo "$SQL_QUERY" >"$RUN_DIR"/query.sql
+  fi
 
   if [ "$CUSTOM_SERVICES" -eq 1 ]; then
     echo -e "\e[33mAs you used a custom service, docker-compose.yml and .env files will not be copied over.\e[0m"
