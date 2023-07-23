@@ -37,6 +37,7 @@ jobs:
           fi
 
       - name: Run test that uses initial files
+        working-directory: projects/sr-calc/
         run: |
           ./run.sh -r mytest2 \
           << EOF
@@ -51,6 +52,7 @@ jobs:
           fi
 
       - name: Run test that uses external files
+        working-directory: projects/sr-calc/
         run: |
           ./run.sh -r mytest3 \
           << EOF
