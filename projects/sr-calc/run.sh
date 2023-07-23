@@ -24,117 +24,121 @@
 #                        /osu-data.env     osu-data  Environment config, will not exist if custom services are used.
 #                        /osu-tools.env    osu-tools "
 
-if [ $# -eq 0 ]; then
-  echo "Specify a directory to save files. ./run.sh [RUN_TAG]"
-  exit 1
-fi
+source ./validate.sh
 
-PROJ_DIR="$(pwd)"
-RESULT_DIR=osu.view/sr-calc/"$1"
-
-echo -n -e "\e[34mNavigating to Project Home: \e[0m"
-cd ../../
-pwd
-
-if [ -d "$RESULT_DIR" ]; then
-  read -r -p "$RESULT_DIR exists, overwrite it? [y/N]: " OVERWRITE
-  if [ "$OVERWRITE" == "Y" ] || [ "$OVERWRITE" == "y" ]; then
-    # Replace Directory if exists
-    echo "Accepted Overwrite for $RESULT_DIR"
-    rm -rf "$RESULT_DIR"
-  else
-    echo "Denied Overwrite, exit early"
-    exit 1
+check_overwrite() {
+  local OVERWRITE=""
+  local RUN_DIR="$1"
+  if [ -d "$RUN_DIR" ]; then
+    read -r -p "$RUN_DIR exists, overwrite it? [y/N]: " OVERWRITE
+    if [ "$OVERWRITE" == "Y" ] || [ "$OVERWRITE" == "y" ]; then
+      # Replace Directory if exists
+      echo "Accepted Overwrite for $RUN_DIR"
+      rm -rf "$RUN_DIR"
+    else
+      echo "Denied Overwrite, exit early"
+      exit 1
+    fi
   fi
-fi
-mkdir -p "$RESULT_DIR"
+  mkdir -p "$RUN_DIR"
+}
 
-echo ""
-echo "Pulling a large amount of .osu files can be slow."
-echo "Reuse .osu files by another result-set if the query is the same!"
-echo ""
-echo "Use an existing result-set's files or create a new result-set:"
+select_result_dir() {
+  echo ""
+  echo "Pulling a large amount of .osu files can be slow."
+  echo "Reuse .osu files by another result-set if the query is the same!"
+  echo ""
+  echo "Use an existing result-set's files or create a new result-set:"
 
-# The long find command finds all directories that have the `files` directory. This is necessary to get the files data
-# We firstly find all directories in sr-calc which contain the `files` dir
-# Then reverse it, so that `cut` can take the element from the back
-# Reverse it again after cut.
-select opt in "[NEW]" "[External Directory]" \
-  $(find osu.view/sr-calc/ -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
-  [ -n "${opt}" ] && break
-done
-
-# If New, we'll run the query, then extract matching files
-if [ "$opt" == "[NEW]" ]; then
-  FILES_DIR="$RESULT_DIR"/files
-  echo "Using new files dir $FILES_DIR"
+  local RUN_DIR="$1"
+  FILES_DIR=""
   CUSTOM_FILES=0
 
-# If External, we'll skip the query and file copying, we'll just run difficulty on this new dir.
-elif [ "$opt" == "[External Directory]" ]; then
-  echo If you use a relative directory, you are at "$(pwd)"
-  read -r -p "Your *.osu files directory: " EXT_FILES_DIR
-  while [ ! -d "$EXT_FILES_DIR" ]; do
-    echo "$EXT_FILES_DIR" is not a directory
-    read -r -p "Your *.osu files directory: " EXT_FILES_DIR
+  # The long find command finds all directories that have the `files` directory. This is necessary to get the files data
+  # We firstly find all directories in sr-calc which contain the `files` dir
+  # Then reverse it, so that `cut` can take the element from the back
+  # Reverse it again after cut.
+  select opt in "[NEW]" "[External Directory]" \
+    $(find "$RUN_DIR"/.. -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
+    [ -n "${opt}" ] && break
   done
-  echo "Found $(find "$EXT_FILES_DIR" -name "*.osu" | wc -l) *.osu files in $FILES_DIR"
-  FILES_DIR="$RESULT_DIR"/files
-  mkdir "$FILES_DIR"
-  echo "Copying over files from $EXT_FILES_DIR to $FILES_DIR/"
-  cp "$EXT_FILES_DIR"/*.osu "$FILES_DIR"/
-  CUSTOM_FILES=1
-# Else, we'll just use files from an existing result
-else
-  FILES_DIR="osu.view/sr-calc/${opt}/files"
-  CUSTOM_FILES=1
-  echo -e "\e[34mUsing custom files dir $FILES_DIR\e[0m"
-  if [ ! -d "$FILES_DIR" ]; then
-    echo "Files Directory does not exist."
-    exit 1
+
+  # If New, we'll run the query, then extract matching files
+  if [ "$opt" == "[NEW]" ]; then
+    FILES_DIR="$RUN_DIR"/files
+    echo "Using new files dir $FILES_DIR"
+    CUSTOM_FILES=0
+
+    validate_set "SQL_QUERY" "$SQL_QUERY" # To query the db
+    validate_url "DB_URL" "$DB_URL"       # To run the query
+    validate_url "FILES_URL" "$FILES_URL" # To download the files
+
+  # If External, we'll skip the query and file copying, we'll just run difficulty on this new dir.
+  elif [ "$opt" == "[External Directory]" ]; then
+    echo If you use a relative directory, you are at "$(pwd)"
+    read -r -p "Your *.osu files directory: " EXT_FILES_DIR
+    while [ ! -d "$EXT_FILES_DIR" ]; do
+      echo "$EXT_FILES_DIR" is not a directory
+      read -r -p "Your *.osu files directory: " EXT_FILES_DIR
+      ((r++)) && ((r == 10)) && exit 1
+    done
+    echo "Found $(find "$EXT_FILES_DIR" -name "*.osu" | wc -l) *.osu files in $FILES_DIR"
+    FILES_DIR="$RUN_DIR"/files
+    mkdir "$FILES_DIR"
+    echo "Copying over files from $EXT_FILES_DIR to $FILES_DIR/"
+    cp "$EXT_FILES_DIR"/*.osu "$FILES_DIR"/
+    CUSTOM_FILES=1
+  # Else, we'll just use files from an existing result
+  else
+    FILES_DIR="$RUN_DIR/../${opt}/files"
+    CUSTOM_FILES=1
+    echo -e "\e[34mUsing custom files dir $FILES_DIR\e[0m"
+    if [ ! -d "$FILES_DIR" ]; then
+      echo "Files Directory does not exist."
+      exit 1
+    fi
   fi
-fi
 
-FILELIST_PATH="$RESULT_DIR"/filelist.txt
-NT_RESULTS_PATH="$RESULT_DIR"/nt.results.json
-DT_RESULTS_PATH="$RESULT_DIR"/dt.results.json
-HT_RESULTS_PATH="$RESULT_DIR"/ht.results.json
+}
 
-# Check if docker service osu.mysql is up
-if docker ps | grep -q osu.mysql && docker ps | grep -q osu.files; then
-  CUSTOM_SERVICES=1
-  echo -e "\e[33mServices are already running, will use current services.\e[0m"
-else
-  CUSTOM_SERVICES=0
-  echo -e "\e[33mServices not available, starting Services\e[0m"
+start_docker() {
+  local ENV_PATH="$1"
+
+  echo "Starting Services"
   docker compose \
     --project-directory ./ \
     --profile files \
     -f "$PROJ_DIR"/docker-compose.yml \
     --env-file ./osu-data-docker/.env \
     --env-file ./osu-tools-docker/.env \
-    --env-file "$PROJ_DIR"/.env \
+    --env-file "$ENV_PATH" \
     up --wait --build
+}
 
-  echo "Configurations: "
-  echo " - /osu.git: $(grep OSU_GIT= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
-  echo "   - branch: $(grep OSU_GIT_BRANCH= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
-  echo " - /osu-tools.git: $(grep OSU_TOOLS_GIT= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
-  echo "   - branch: $(grep OSU_TOOLS_GIT_BRANCH= "$PROJ_DIR"/.env | cut -d = -f 2 | head -1)"
-fi
+stop_docker() {
+  local ENV_PATH=$1
 
-# If we're not using custom files, we'll find them via query.
-if [ $CUSTOM_FILES -eq 0 ]; then
+  echo "Stopping Services"
+  docker compose \
+    --project-directory ./ \
+    --profile files \
+    -f "$PROJ_DIR"/docker-compose.yml \
+    --env-file ./osu-data-docker/.env \
+    --env-file ./osu-tools-docker/.env \
+    --env-file "$ENV_PATH" \
+    stop
+}
+
+run_query() {
   # Pull file list according to query
-  MYSQL_PASSWORD=p@ssw0rd1
+  local FILELIST_PATH="$1"
+  local FILES_DIR="$2"
+  local MYSQL_PASSWORD="$3"
   docker exec osu.mysql mysql -u root --password="$MYSQL_PASSWORD" \
-    -D osu -N -e "$(cat "$PROJ_DIR"/query.sql)" \
+    -D osu -N -e "$SQL_QUERY" \
     >"$FILELIST_PATH"
 
-  echo "File List saved in /osu.view/recalc-sr/$FILELIST_PATH"
-
-  # Get osu.files dir name dynamically
-  OSU_FILES_DIRNAME=$(docker exec osu.files ls)
+  local OSU_FILES_DIRNAME="${DATASET_DATE}_osu_files"
 
   # Create a temporary directory to copy all files to send to tar.
   echo "Moving Files to /$FILES_DIR/"
@@ -143,11 +147,33 @@ if [ $CUSTOM_FILES -eq 0 ]; then
     while read beatmap_id;
     do cp /osu.files/'"$OSU_FILES_DIRNAME"'/"$beatmap_id".osu /'"$FILES_DIR"'/"$beatmap_id".osu;
     done < /'"$FILELIST_PATH"';'
-fi
+}
 
-# Evaluate beatmaps via osu.tools
-docker exec osu.tools sh -c \
-  '
+copy_configs() {
+  local CUSTOM_FILES="$1"
+  local RUN_DIR="$2"
+  local PROJ_DIR="$3"
+  local ENV_PATH="$4"
+
+  if [ "$CUSTOM_FILES" -eq 0 ]; then
+    echo "$SQL_QUERY" >"$RUN_DIR"/query.sql
+  fi
+
+  cp "$PROJ_DIR"/docker-compose.yml "$RUN_DIR"/
+  cp ./osu-data-docker/.env "$RUN_DIR"/osu-data.env
+  cp ./osu-tools-docker/.env "$RUN_DIR"/osu-tools.env
+  cp "$ENV_PATH" "$RUN_DIR"/.env
+}
+
+evaluate_maps() {
+  local FILES_DIR="$1"
+  local NT_RESULTS_PATH="$2"
+  local DT_RESULTS_PATH="$3"
+  local HT_RESULTS_PATH="$4"
+
+  # Evaluate beatmaps via osu.tools
+  docker exec osu.tools sh -c \
+    '
   echo -n "Evaluating Beatmaps (Normal Time): ";
   dotnet PerformanceCalculator.dll difficulty "/'"$FILES_DIR"'" -j -o "/'"$NT_RESULTS_PATH"'" >> /dev/null;
   echo "Exported to '"$NT_RESULTS_PATH"'";
@@ -160,29 +186,40 @@ docker exec osu.tools sh -c \
   dotnet PerformanceCalculator.dll difficulty "/'"$FILES_DIR"'" -j -m ht -o "/'"$HT_RESULTS_PATH"'" >> /dev/null;
   echo "Exported to '"$HT_RESULTS_PATH"'";
   '
+}
 
-echo -e "\e[34mCopying Over Configurations for Lineage\e[0m"
-if [ $CUSTOM_FILES -eq 1 ]; then
-  echo -e "\e[33mAs you used a custom fileset, query.sql will not be copied over.\e[0m"
-else
-  cp "$PROJ_DIR"/query.sql "$RESULT_DIR"/query.sql
-fi
+run() {
+  validate_git "OSU_GIT" "$OSU_GIT" "$OSU_GIT_BRANCH"
+  validate_git "OSU_TOOLS_GIT" "$OSU_TOOLS_GIT" "$OSU_TOOLS_GIT_BRANCH"
+  RUN_DIR=osu.view/sr-calc/"$RUN_TAG"
+  PROJ_DIR="$(pwd)"
+  MYSQL_PASSWORD="p@ssw0rd1"
+  FILELIST_PATH="$RUN_DIR"/filelist.txt
+  NT_RESULTS_PATH="$RUN_DIR"/nt.results.json
+  DT_RESULTS_PATH="$RUN_DIR"/dt.results.json
+  HT_RESULTS_PATH="$RUN_DIR"/ht.results.json
 
-if [ $CUSTOM_SERVICES -eq 1 ]; then
-  echo -e "\e[33mAs you used a custom service, docker-compose.yml and .env files will not be copied over.\e[0m"
-else
-  cp "$PROJ_DIR"/docker-compose.yml "$RESULT_DIR"/
-  cp ./osu-data-docker/.env "$RESULT_DIR"/osu-data.env
-  cp ./osu-tools-docker/.env "$RESULT_DIR"/osu-tools.env
-  cp "$PROJ_DIR"/.env "$RESULT_DIR"/sr-calc.env
-  echo "Stopping Services"
-  docker compose \
-    --project-directory ./ \
-    --profile files \
-    -f "$PROJ_DIR"/docker-compose.yml \
-    --env-file ./osu-data-docker/.env \
-    --env-file ./osu-tools-docker/.env \
-    stop
-fi
+  echo -n -e "\e[34mNavigating to Project Home: \e[0m"
+  cd ../../
+  pwd
 
-echo -e "\e[32mCompleted.\e[0m"
+  check_overwrite "$RUN_DIR"
+  select_result_dir "$RUN_DIR"
+  start_docker "$ENV_PATH" "osu.mysql" "osu.files" "osu.tools"
+
+  if [ "$CUSTOM_FILES" -eq 0 ]; then
+    run_query "$FILELIST_PATH" "$FILES_DIR" "$MYSQL_PASSWORD"
+  fi
+
+  evaluate_maps "$FILES_DIR" "$NT_RESULTS_PATH" "$DT_RESULTS_PATH" "$HT_RESULTS_PATH"
+
+  echo -e "\e[34mCopying Over Configurations for Lineage\e[0m"
+  copy_configs "$CUSTOM_FILES" "$RUN_DIR" "$PROJ_DIR" "$ENV_PATH"
+  stop_docker "$ENV_PATH"
+
+  echo -e "\e[32mCompleted.\e[0m"
+}
+
+source ./input.sh
+
+run

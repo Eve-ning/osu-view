@@ -1,0 +1,74 @@
+name: SR Calculation Tests
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: 1. Runs initial, new test
+        working-directory: projects/sr-calc/
+        run: |
+          chmod +x ./run.sh
+          ./run.sh -r mytest \
+                   -y https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_performance_mania_top_1000.tar.bz2 \
+                   -z https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_osu_files.tar.bz2 \
+                   -q "SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND approved = 1 LIMIT 10;" \
+          << EOF
+          1
+          EOF || exit 1
+
+      - name: 1. Assert that results, files, query, and .env exist
+        run: |
+          [ -f osu.view/sr-calc/mytest/nt.results.json ] || exit 1
+          [ -d osu.view/sr-calc/mytest/files ] || exit 2
+          [ -f osu.view/sr-calc/mytest/query.sql ] || exit 3
+          [ -f osu.view/sr-calc/mytest/.env ] || exit 4
+
+      - name: 2. Run test that uses initial files
+        working-directory: projects/sr-calc/
+        run: |
+          ./run.sh -r mytest2 \
+          << EOF
+          3
+          EOF || exit 1
+
+      - name: 2. Assert that only results and .env exist
+        run: |
+          [ -f osu.view/sr-calc/mytest2/nt.results.json ] || exit 1 
+          [ ! -d osu.view/sr-calc/mytest2/files ] || exit 2 
+          [ ! -f osu.view/sr-calc/mytest2/query.sql ] || exit 3 
+          [ -f osu.view/sr-calc/mytest2/.env ] || exit 4
+
+      - name: 3. Run test that uses external files
+        working-directory: projects/sr-calc/
+        run: |
+          ./run.sh -r mytest3 \
+          << EOF
+          2
+          rsc/osu_files/
+          EOF || exit 1
+
+      - name: 3. Assert that only results, files and .env exist
+        run: |
+          [ -f osu.view/sr-calc/mytest3/nt.results.json ] || exit 1 
+          [ -d osu.view/sr-calc/mytest3/files ] || exit 2
+          [ ! -f osu.view/sr-calc/mytest3/query.sql ] || exit 3 
+          [ -f osu.view/sr-calc/mytest3/.env ] || exit 4
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: SR Calculation Results
+          path: osu.view/sr-calc/
