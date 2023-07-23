@@ -17,24 +17,55 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: Runs Project
+      - name: Runs initial, new test
         working-directory: projects/sr-calc/
         run: |
           chmod +x ./run.sh
           ./run.sh -r mytest \
                    -y https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_performance_mania_top_1000.tar.bz2 \
-                   -z https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_osu_files.tar.bz2 << EOF
+                   -z https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_osu_files.tar.bz2 \
+                   -q "SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND approved = 1 LIMIT 10" \
+          << EOF
           1
           EOF
 
-      - name: Assert Essential Project Files exist
+      - name: Assert that results and files dir exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest/nt.results.json ]; then
-            echo Missing expected nt.results.json 
+          if [ ! -f osu.view/sr-calc/mytest/nt.results.json ] || \
+             [ ! -d osu.view/sr-calc/mytest/files ]; then
+            exit 1
+          fi
+
+      - name: Run test that uses initial files
+        run: |
+          ./run.sh -r mytest2 \
+          << EOF
+          3
+          EOF
+
+      - name: Assert that results and files dir don't exist
+        run: |
+          if [ ! -f osu.view/sr-calc/mytest2/nt.results.json ] ||
+             [ -d osu.view/sr-calc/mytest2/files ]; then
+            exit 1
+          fi
+
+      - name: Run test that uses external files
+        run: |
+          ./run.sh -r mytest3 \
+          << EOF
+          2
+          rsc/osu_files/
+          EOF
+
+      - name: Assert that results and files dir don't exist
+        run: |
+          if [ ! -f osu.view/sr-calc/mytest3/nt.results.json ] ||
+             [ -d osu.view/sr-calc/mytest3/files ]; then
             exit 1
           fi
 
       - uses: actions/upload-artifact@v3
         with:
           name: SR Calculation Results
-          path: osu.view/sr-calc/mytest/
+          path: osu.view/sr-calc/
