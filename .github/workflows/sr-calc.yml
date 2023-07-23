@@ -17,7 +17,7 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: Runs initial, new test
+      - name: 1. Runs initial, new test
         working-directory: projects/sr-calc/
         run: |
           chmod +x ./run.sh
@@ -29,14 +29,14 @@ jobs:
           1
           EOF
 
-      - name: Assert that results, files, query, and env exist
+      - name: 1. Assert that results, files, query, and env exist
         run: |
           [ -f osu.view/sr-calc/mytest/nt.results.json ] || exit 1
           [ -d osu.view/sr-calc/mytest/files ] || exit 2
           [ -f osu.view/sr-calc/mytest/query.sql ] || exit 3
           [ -f osu.view/sr-calc/mytest/.env ] || exit 4
 
-      - name: Run test that uses initial files
+      - name: 2. Run test that uses initial files
         working-directory: projects/sr-calc/
         run: |
           ./run.sh -r mytest2 \
@@ -44,14 +44,14 @@ jobs:
           3
           EOF
 
-      - name: Assert that only results and .env exist
+      - name: 2. Assert that only results and .env exist
         run: |
           [ -f osu.view/sr-calc/mytest2/nt.results.json ] || exit 1 
           [ ! -d osu.view/sr-calc/mytest2/files ] || exit 2 
           [ ! -f osu.view/sr-calc/mytest2/query.sql ] || exit 3 
           [ -f osu.view/sr-calc/mytest2/.env ] || exit 4
 
-      - name: Run test that uses external files
+      - name: 3. Run test that uses external files
         working-directory: projects/sr-calc/
         run: |
           ./run.sh -r mytest3 \
@@ -60,7 +60,7 @@ jobs:
           rsc/osu_files/
           EOF
 
-      - name: Assert that only results, files and .env exist
+      - name: 3. Assert that only results, files and .env exist
         run: |
           [ -f osu.view/sr-calc/mytest3/nt.results.json ] || exit 1 
           [ -d osu.view/sr-calc/mytest3/files ] || exit 2
