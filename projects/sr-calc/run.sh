@@ -24,6 +24,8 @@
 #                        /osu-data.env     osu-data  Environment config, will not exist if custom services are used.
 #                        /osu-tools.env    osu-tools "
 
+source ./validate.sh
+
 check_overwrite() {
   local OVERWRITE=""
   local RUN_DIR="$1"
@@ -66,6 +68,10 @@ select_result_dir() {
     FILES_DIR="$RUN_DIR"/files
     echo "Using new files dir $FILES_DIR"
     CUSTOM_FILES=0
+
+    validate_set "SQL_QUERY" "$SQL_QUERY" # To query the db
+    validate_url "DB_URL" "$DB_URL"       # To run the query
+    validate_url "FILES_URL" "$FILES_URL" # To download the files
 
   # If External, we'll skip the query and file copying, we'll just run difficulty on this new dir.
   elif [ "$opt" == "[External Directory]" ]; then
@@ -137,7 +143,7 @@ run_query() {
   local FILES_DIR="$2"
   local MYSQL_PASSWORD="$3"
   docker exec osu.mysql mysql -u root --password="$MYSQL_PASSWORD" \
-    -D osu -N -e "$(cat "$PROJ_DIR"/query.sql)" \
+    -D osu -N -e "$SQL_QUERY" \
     >"$FILELIST_PATH"
 
   # Get osu.files dir name dynamically
@@ -160,11 +166,7 @@ copy_configs() {
   local PROJ_DIR="$4"
   local ENV_PATH="$5"
 
-  if [ "$CUSTOM_FILES" -eq 1 ]; then
-    echo -e "\e[33mAs you used a custom fileset, query.sql will not be copied over.\e[0m"
-  else
-    cp "$PROJ_DIR"/query.sql "$RUN_DIR"/query.sql
-  fi
+  $SQL_QUERY > "$RUN_DIR"/query.sql
 
   if [ "$CUSTOM_SERVICES" -eq 1 ]; then
     echo -e "\e[33mAs you used a custom service, docker-compose.yml and .env files will not be copied over.\e[0m"
@@ -174,7 +176,7 @@ copy_configs() {
     cp ./osu-tools-docker/.env "$RUN_DIR"/osu-tools.env
     cp "$ENV_PATH" "$RUN_DIR"/sr-calc.env
     echo "Stopping Services"
-    stop_docker $ENV_PATH
+    stop_docker "$ENV_PATH"
   fi
 }
 
@@ -202,6 +204,8 @@ evaluate_maps() {
 }
 
 run() {
+  validate_git "OSU_GIT" "$OSU_GIT" "$OSU_GIT_BRANCH"
+  validate_git "OSU_TOOLS_GIT" "$OSU_TOOLS_GIT" "$OSU_TOOLS_GIT_BRANCH"
   RUN_DIR=osu.view/sr-calc/"$RUN_TAG"
   PROJ_DIR="$(pwd)"
   MYSQL_PASSWORD="p@ssw0rd1"

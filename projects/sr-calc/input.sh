@@ -1,7 +1,13 @@
 #!/bin/bash
-usage="Usage: $(basename "$0") [-v MODE_VERSION] [-d DATA_DATE] [-r RUN_TAG] [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
-       $(basename "$0") [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
+usage="\
+Usage:
+  If you don't have a custom database or files URL:
+  $(basename "$0") [-v MODE_VERSION] [-d DATA_DATE] [-r RUN_TAG] [-q SQL_QUERY] \\
+       [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
 
+  If you have a custom database or files URL:
+  $(basename "$0") [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-q SQL_QUERY] \\
+       [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
 
 Options:
   -h     Display this help.
@@ -14,7 +20,7 @@ Options:
   -o (1) OSU_GIT_BRANCH       osu! game git branch name.   Default: master
   -t (0) OSU_TOOLS_GIT        osu! tools git link.         Default: https://github.com/ppy/osu-tools
   -t (1) OSU_TOOLS_GIT_BRANCH osu! tools git branch name.  Default: master
-  -e     ENV_PATH             path to .env file            Default: /tmp/sr-calc/.env
+  -q     SQL_QUERY            MySQL Query to retrieve      Default: SELECT beatmap_id FROM osu_beatmaps LIMIT 10;
 
   Use these options if you need more control
   -y     https://data.ppy.sh Database URL. Example: https://data.ppy.sh/$(date '+%Y_%m_01')_performance_<VERSION>.tar.bz2
@@ -81,51 +87,21 @@ DATASET_DATE=${DATASET_DATE:="$(date '+%Y_%m_01')"}
 DB_URL=${DB_URL:="https://data.ppy.sh/${DATASET_DATE}_performance_${VERSION}.tar.bz2"}
 FILES_URL=${FILES_URL:="https://data.ppy.sh/${DATASET_DATE}_osu_files.tar.bz2"}
 ENV_PATH=${ENV_PATH:="/tmp/sr-calc/.env"}
+QUERY
+
 # Input Validation
-BAD_INPUT=0
-echo "Input Validation: "
-echo -n "  RUN_TAG=$RUN_TAG: "
+echo -n "RUN_TAG=$RUN_TAG: "
 if [ ! "$RUN_TAG" ]; then
   echo -e "\e[31mRUN_TAG IS MISSING!\e[0m"
-  BAD_INPUT=1
+  exit 1
 else echo -e "\e[32mOK\e[0m"; fi
 
-echo -n "  DB_URL=$DB_URL: "
-if ! curl --output /dev/null --silent --head --fail "$DB_URL"; then
-  echo -e "\e[31mDOES NOT EXIST!\e[0m"
-  BAD_INPUT=1
-else echo -e "\e[32mOK\e[0m"; fi
-
-echo -n "  FILES_URL=$FILES_URL: "
-if ! curl --output /dev/null --silent --head --fail "$FILES_URL"; then
-  echo -e "\e[31mDOES NOT EXIST!\e[0m"
-  BAD_INPUT=1
-else echo -e "\e[32mOK\e[0m"; fi
-
-echo -n "  OSU_GIT @ OSU_GIT_BRANCH=$OSU_GIT @ $OSU_GIT_BRANCH: "
-git ls-remote --heads "${OSU_GIT}" "${OSU_GIT_BRANCH}" | grep "${OSU_GIT_BRANCH}" >/dev/null
-if [ "$?" == "1" ]; then
-  echo -e "\e[31mDOES NOT EXIST!\e[0m"
-  BAD_INPUT=1
-else echo -e "\e[32mOK\e[0m"; fi
-
-echo -n "  OSU_TOOLS_GIT @ OSU_TOOLS_GIT_BRANCH=$OSU_TOOLS_GIT @ $OSU_TOOLS_GIT_BRANCH: "
-git ls-remote --heads "${OSU_TOOLS_GIT}" "${OSU_TOOLS_GIT_BRANCH}" | grep "${OSU_TOOLS_GIT_BRANCH}" >/dev/null
-if [ "$?" == "1" ]; then
-  echo -e "\e[31mDOES NOT EXIST!\e[0m"
-  BAD_INPUT=1
-else echo -e "\e[32mOK\e[0m"; fi
-
-echo -n "  ENV_PATH=$ENV_PATH: "
+echo -n "ENV_PATH=$ENV_PATH: "
 if [ ! "$ENV_PATH" ]; then
   echo -e "\e[31mDOES NOT EXIST!\e[0m"
-  BAD_INPUT=1
+  exit 1
 else echo -e "\e[32mOK\e[0m"; fi
 
-if [ "$BAD_INPUT" == "1" ]; then
-  echo -e "\e[31mInvalid Input. See above errors\e[0m. See usage with -h"
-  exit 1
-fi
 
 mkdir -p "$(dirname "$ENV_PATH")"
 
@@ -135,4 +111,4 @@ FILES_URL=$FILES_URL
 OSU_GIT=$OSU_GIT
 OSU_GIT_BRANCH=$OSU_GIT_BRANCH
 OSU_TOOLS_GIT=$OSU_TOOLS_GIT
-OSU_TOOLS_GIT_BRANCH=$OSU_TOOLS_GIT_BRANCH" > "$ENV_PATH"
+OSU_TOOLS_GIT_BRANCH=$OSU_TOOLS_GIT_BRANCH" >"$ENV_PATH"
