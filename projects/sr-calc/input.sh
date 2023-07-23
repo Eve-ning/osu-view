@@ -24,7 +24,7 @@ Options:
   -o (1) OSU_GIT_BRANCH       osu! game git branch name.   Default: master
   -t (0) OSU_TOOLS_GIT        osu! tools git link.         Default: https://github.com/ppy/osu-tools
   -t (1) OSU_TOOLS_GIT_BRANCH osu! tools git branch name.  Default: master
-  -q     SQL_QUERY            MySQL Query to retrieve      Default: SELECT beatmap_id FROM osu_beatmaps LIMIT 10;
+  -q     SQL_QUERY            MySQL Query to retrieve      Default: SELECT beatmap_id FROM osu_beatmaps WHERE playmode=3 AND approved=1 LIMIT 10;
 
   Use these options if you need more control
   -y     https://data.ppy.sh Database URL. Example: https://data.ppy.sh/$(date '+%Y_%m_01')_performance_<VERSION>.tar.bz2
@@ -93,7 +93,7 @@ DATASET_DATE=${DATASET_DATE:="$(date '+%Y_%m_01')"}
 DB_URL=${DB_URL:="https://data.ppy.sh/${DATASET_DATE}_performance_${VERSION}.tar.bz2"}
 FILES_URL=${FILES_URL:="https://data.ppy.sh/${DATASET_DATE}_osu_files.tar.bz2"}
 ENV_PATH=${ENV_PATH:="/tmp/sr-calc/.env"}
-QUERY
+SQL_QUERY=${SQL_QUERY:="SELECT beatmap_id FROM osu_beatmaps WHERE playmode=3 AND approved=1 LIMIT 10;"}
 
 # Input Validation
 echo -n "RUN_TAG=$RUN_TAG: "
