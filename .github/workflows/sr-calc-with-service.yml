@@ -45,5 +45,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: SR Calculation w/ Service Results
+          name: SR Calculation with Service Results
           path: osu.view/sr-calc/
