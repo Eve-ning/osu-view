@@ -46,10 +46,10 @@ jobs:
 
       - name: Assert that only results and .env exist
         run: |
-          [ ! -f osu.view/sr-calc/mytest2/nt.results.json ] || exit 1 
-          [ -d osu.view/sr-calc/mytest2/files ] || exit 2 
-          [ -f osu.view/sr-calc/mytest2/query.sql ] || exit 3 
-          [ ! -f osu.view/sr-calc/mytest2/.env ] || exit 4
+          [ -f osu.view/sr-calc/mytest2/nt.results.json ] || exit 1 
+          [ ! -d osu.view/sr-calc/mytest2/files ] || exit 2 
+          [ ! -f osu.view/sr-calc/mytest2/query.sql ] || exit 3 
+          [ -f osu.view/sr-calc/mytest2/.env ] || exit 4
 
       - name: Run test that uses external files
         working-directory: projects/sr-calc/
@@ -62,10 +62,10 @@ jobs:
 
       - name: Assert that only results, files and .env exist
         run: |
-          [ ! -f osu.view/sr-calc/mytest3/nt.results.json ] || exit 1 
-          [ ! -d osu.view/sr-calc/mytest3/files ] || exit 2
-          [ -f osu.view/sr-calc/mytest3/query.sql ] || exit 3 
-          [ ! -f osu.view/sr-calc/mytest3/.env ] || exit 4
+          [ -f osu.view/sr-calc/mytest3/nt.results.json ] || exit 1 
+          [ -d osu.view/sr-calc/mytest3/files ] || exit 2
+          [ ! -f osu.view/sr-calc/mytest3/query.sql ] || exit 3 
+          [ -f osu.view/sr-calc/mytest3/.env ] || exit 4
 
       - uses: actions/upload-artifact@v3
         if: always()
