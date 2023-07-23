@@ -29,7 +29,7 @@ jobs:
           1
           EOF || exit 1
 
-      - name: 1. Assert that results, files, query, and env exist
+      - name: 1. Assert that results, files, query, and .env exist
         run: |
           [ -f osu.view/sr-calc/mytest/nt.results.json ] || exit 1
           [ -d osu.view/sr-calc/mytest/files ] || exit 2

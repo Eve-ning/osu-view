@@ -103,9 +103,8 @@ select_result_dir() {
 
 start_docker() {
   local ENV_PATH="$1"
-  shift
-  local SERVICES=("$@")
 
+  echo "Starting Services"
   docker compose \
     --project-directory ./ \
     --profile files \
@@ -113,11 +112,13 @@ start_docker() {
     --env-file ./osu-data-docker/.env \
     --env-file ./osu-tools-docker/.env \
     --env-file "$ENV_PATH" \
-    up --wait --build "${SERVICES[@]}"
+    up --wait --build
 }
 
 stop_docker() {
   local ENV_PATH=$1
+
+  echo "Stopping Services"
   docker compose \
     --project-directory ./ \
     --profile files \
@@ -152,7 +153,6 @@ run_query() {
 
 copy_configs() {
   local CUSTOM_FILES="$1"
-  local CUSTOM_SERVICES="$2"
   local RUN_DIR="$3"
   local PROJ_DIR="$4"
   local ENV_PATH="$5"
@@ -161,16 +161,10 @@ copy_configs() {
     echo "$SQL_QUERY" >"$RUN_DIR"/query.sql
   fi
 
-  if [ "$CUSTOM_SERVICES" -eq 1 ]; then
-    echo -e "\e[33mAs you used a custom service, docker-compose.yml and .env files will not be copied over.\e[0m"
-  else
-    cp "$PROJ_DIR"/docker-compose.yml "$RUN_DIR"/
-    cp ./osu-data-docker/.env "$RUN_DIR"/osu-data.env
-    cp ./osu-tools-docker/.env "$RUN_DIR"/osu-tools.env
-    cp "$ENV_PATH" "$RUN_DIR"/.env
-    echo "Stopping Services"
-    stop_docker "$ENV_PATH"
-  fi
+  cp "$PROJ_DIR"/docker-compose.yml "$RUN_DIR"/
+  cp ./osu-data-docker/.env "$RUN_DIR"/osu-data.env
+  cp ./osu-tools-docker/.env "$RUN_DIR"/osu-tools.env
+  cp "$ENV_PATH" "$RUN_DIR"/.env
 }
 
 evaluate_maps() {
@@ -213,28 +207,7 @@ run() {
 
   check_overwrite "$RUN_DIR"
   select_result_dir "$RUN_DIR"
-
-  # If we have custom files, we just need to run the osu.tools service
-  if [ "$CUSTOM_FILES" -eq 1 ]; then
-    if docker ps | grep -q osu.tools; then
-      CUSTOM_SERVICES=1
-      echo -e "\e[33mServices are already running, will use current services.\e[0m"
-    else
-      CUSTOM_SERVICES=0
-      start_docker "$ENV_PATH" "osu.tools"
-    fi
-  else
-    # Else, we also need to run the osu.mysql and osu.files services
-    if docker ps | grep -q osu.mysql &&
-      docker ps | grep -q osu.files &&
-      docker ps | grep -q osu.tools; then
-      CUSTOM_SERVICES=1
-      echo -e "\e[33mServices are already running, will use current services.\e[0m"
-    else
-      CUSTOM_SERVICES=0
-      start_docker "$ENV_PATH" "osu.mysql" "osu.files" "osu.tools"
-    fi
-  fi
+  start_docker "$ENV_PATH" "osu.mysql" "osu.files" "osu.tools"
 
   if [ "$CUSTOM_FILES" -eq 0 ]; then
     run_query "$FILELIST_PATH" "$FILES_DIR" "$MYSQL_PASSWORD"
@@ -243,7 +216,8 @@ run() {
   evaluate_maps "$FILES_DIR" "$NT_RESULTS_PATH" "$DT_RESULTS_PATH" "$HT_RESULTS_PATH"
 
   echo -e "\e[34mCopying Over Configurations for Lineage\e[0m"
-  copy_configs "$CUSTOM_FILES" "$CUSTOM_SERVICES" "$RUN_DIR" "$PROJ_DIR" "$ENV_PATH"
+  copy_configs "$CUSTOM_FILES" "$RUN_DIR" "$PROJ_DIR" "$ENV_PATH"
+  stop_docker "$ENV_PATH"
 
   echo -e "\e[32mCompleted.\e[0m"
 }
