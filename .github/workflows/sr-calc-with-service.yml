@@ -1,0 +1,49 @@
+name: SR Calculation with Service Tests
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  push:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: Start Service in osu-tools-docker
+        working-directory: osu-tools-docker/
+        run: |
+          docker-compose up --wait
+
+      - name: Runs initial, new test
+        working-directory: projects/sr-calc/
+        run: |
+          chmod +x ./run.sh
+          ./run.sh -r mytest \
+                   -y https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_performance_mania_top_1000.tar.bz2 \
+                   -z https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_osu_files.tar.bz2 \
+                   -q "SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND approved = 1 LIMIT 10" \
+          << EOF
+          1
+          EOF
+
+      - name: Assert that results, files, query, and env exist
+        run: |
+          if [ ! -f osu.view/sr-calc/mytest/nt.results.json ] || \
+             [ ! -d osu.view/sr-calc/mytest/files ] || \
+             [ ! -f osu.view/sr-calc/mytest/query.sql ] || \
+             [ -f osu.view/sr-calc/mytest/.env ]; then
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: SR Calculation w/ Service Results
+          path: osu.view/sr-calc/
