@@ -31,12 +31,10 @@ jobs:
 
       - name: Assert that results, files, query, and env exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest/nt.results.json ] || \
-             [ ! -d osu.view/sr-calc/mytest/files ] || \
-             [ ! -f osu.view/sr-calc/mytest/query.sql ] || \
-             [ ! -f osu.view/sr-calc/mytest/.env ]; then
-            exit 1
-          fi
+          [ -f osu.view/sr-calc/mytest/nt.results.json ] || exit 1
+          [ -d osu.view/sr-calc/mytest/files ] || exit 2
+          [ -f osu.view/sr-calc/mytest/query.sql ] || exit 3
+          [ -f osu.view/sr-calc/mytest/.env ] || exit 4
 
       - name: Run test that uses initial files
         working-directory: projects/sr-calc/
@@ -48,12 +46,10 @@ jobs:
 
       - name: Assert that only results and .env exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest2/nt.results.json ] || \
-             [ -d osu.view/sr-calc/mytest2/files ] || \
-             [ -f osu.view/sr-calc/mytest2/query.sql ] || \
-             [ ! -f osu.view/sr-calc/mytest2/.env ]; then
-            exit 1
-          fi
+          [ ! -f osu.view/sr-calc/mytest2/nt.results.json ] || exit 1 
+          [ -d osu.view/sr-calc/mytest2/files ] || exit 2 
+          [ -f osu.view/sr-calc/mytest2/query.sql ] || exit 3 
+          [ ! -f osu.view/sr-calc/mytest2/.env ] || exit 4
 
       - name: Run test that uses external files
         working-directory: projects/sr-calc/
@@ -66,12 +62,10 @@ jobs:
 
       - name: Assert that only results, files and .env exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest3/nt.results.json ] || \
-             [ ! -d osu.view/sr-calc/mytest3/files ] || \
-             [ -f osu.view/sr-calc/mytest3/query.sql ] || \
-             [ ! -f osu.view/sr-calc/mytest3/.env ]; then
-            exit 1
-          fi
+          [ ! -f osu.view/sr-calc/mytest3/nt.results.json ] || exit 1 
+          [ ! -d osu.view/sr-calc/mytest3/files ] || exit 2
+          [ -f osu.view/sr-calc/mytest3/query.sql ] || exit 3 
+          [ ! -f osu.view/sr-calc/mytest3/.env ] || exit 4
 
       - uses: actions/upload-artifact@v3
         if: always()

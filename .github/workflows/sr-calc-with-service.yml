@@ -36,12 +36,10 @@ jobs:
 
       - name: Assert that results, files, query, and env exist
         run: |
-          if [ ! -f osu.view/sr-calc/mytest/nt.results.json ] || \
-             [ ! -d osu.view/sr-calc/mytest/files ] || \
-             [ ! -f osu.view/sr-calc/mytest/query.sql ] || \
-             [ -f osu.view/sr-calc/mytest/.env ]; then
-            exit 1
-          fi
+          [ ! -f osu.view/sr-calc/mytest/nt.results.json ] || exit 1 
+          [ ! -d osu.view/sr-calc/mytest/files ] || exit 2
+          [ ! -f osu.view/sr-calc/mytest/query.sql ] || exit 3 
+          [ -f osu.view/sr-calc/mytest/.env ] || exit 4
 
       - uses: actions/upload-artifact@v3
         if: always()
