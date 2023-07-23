@@ -9,6 +9,10 @@ Usage:
   $(basename "$0") [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-q SQL_QUERY] \\
        [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
 
+Description:
+  Depending on the use case, some options are required.
+  For example, if you're using 'sr-calc' using a MySQL, then SQL_QUERY is expected.
+
 Options:
   -h     Display this help.
   -v     MODE_VERSION: E.g. 'osu_top_1000'.
@@ -33,6 +37,7 @@ Examples:
 
     $(basename "$0") -r my_run \\
       -v catch_top_1000
+      -q 'SELECT beatmap_id FROM osu_beatmaps WHERE playmode=2 LIMIT 10;'
 
   Use a custom date. (It must exist in https://data.ppy.sh!)
 
