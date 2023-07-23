@@ -153,9 +153,9 @@ run_query() {
 
 copy_configs() {
   local CUSTOM_FILES="$1"
-  local RUN_DIR="$3"
-  local PROJ_DIR="$4"
-  local ENV_PATH="$5"
+  local RUN_DIR="$2"
+  local PROJ_DIR="$3"
+  local ENV_PATH="$4"
 
   if [ "$CUSTOM_FILES" -eq 0 ]; then
     echo "$SQL_QUERY" >"$RUN_DIR"/query.sql
