@@ -20,7 +20,7 @@ jobs:
       - name: Start Service in osu-tools-docker
         working-directory: osu-tools-docker/
         run: |
-          docker-compose up --wait
+          docker-compose up --wait || exit 1
 
       - name: Start Service in osu-data-docker
         working-directory: osu-data-docker/
@@ -37,7 +37,7 @@ jobs:
                    -q "SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND approved = 1 LIMIT 10" \
           << EOF
           1
-          EOF
+          EOF || exit 1
 
       - name: Assert that only results, files, query exist
         run: |

@@ -27,7 +27,7 @@ jobs:
                    -q "SELECT beatmap_id FROM osu_beatmaps WHERE playmode = 3 AND approved = 1 LIMIT 10" \
           << EOF
           1
-          EOF
+          EOF || exit 1
 
       - name: 1. Assert that results, files, query, and env exist
         run: |
@@ -42,7 +42,7 @@ jobs:
           ./run.sh -r mytest2 \
           << EOF
           3
-          EOF
+          EOF || exit 1
 
       - name: 2. Assert that only results and .env exist
         run: |
@@ -58,7 +58,7 @@ jobs:
           << EOF
           2
           rsc/osu_files/
-          EOF
+          EOF || exit 1
 
       - name: 3. Assert that only results, files and .env exist
         run: |
