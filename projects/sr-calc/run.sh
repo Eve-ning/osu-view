@@ -236,3 +236,7 @@ run() {
 
   echo -e "\e[32mCompleted.\e[0m"
 }
+
+source ./input.sh
+
+run

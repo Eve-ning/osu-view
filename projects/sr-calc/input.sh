@@ -1,7 +1,6 @@
 #!/bin/bash
-
-usage="Usage: $(basename "$0") [-v MODE_VERSION] [-d DATA_DATE] [-r RUN_TAG] [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH ]
-       $(basename "$0") [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH ]
+usage="Usage: $(basename "$0") [-v MODE_VERSION] [-d DATA_DATE] [-r RUN_TAG] [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
+       $(basename "$0") [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
 
 
 Options:
@@ -137,7 +136,3 @@ OSU_GIT=$OSU_GIT
 OSU_GIT_BRANCH=$OSU_GIT_BRANCH
 OSU_TOOLS_GIT=$OSU_TOOLS_GIT
 OSU_TOOLS_GIT_BRANCH=$OSU_TOOLS_GIT_BRANCH" > "$ENV_PATH"
-
-source ./run.sh
-
-run
