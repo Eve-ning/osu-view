@@ -167,7 +167,7 @@ copy_configs() {
   local PROJ_DIR="$4"
   local ENV_PATH="$5"
 
-  $SQL_QUERY > "$RUN_DIR"/query.sql
+  echo "$SQL_QUERY" > "$RUN_DIR"/query.sql
 
   if [ "$CUSTOM_SERVICES" -eq 1 ]; then
     echo -e "\e[33mAs you used a custom service, docker-compose.yml and .env files will not be copied over.\e[0m"
