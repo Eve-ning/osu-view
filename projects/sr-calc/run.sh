@@ -103,27 +103,17 @@ select_result_dir() {
 
 start_docker() {
   local ENV_PATH="$1"
-  local CUSTOM_FILES="$2"
+  shift
+  local SERVICES=("$@")
 
-  if [ "$CUSTOM_FILES" -eq 0 ]; then
-    docker compose \
-      --project-directory ./ \
-      --profile files \
-      -f "$PROJ_DIR"/docker-compose.yml \
-      --env-file ./osu-data-docker/.env \
-      --env-file ./osu-tools-docker/.env \
-      --env-file "$ENV_PATH" \
-      up --wait --build
-  else
-    docker compose \
-      --project-directory ./ \
-      --profile files \
-      -f "$PROJ_DIR"/docker-compose.yml \
-      --env-file ./osu-data-docker/.env \
-      --env-file ./osu-tools-docker/.env \
-      --env-file "$ENV_PATH" \
-      up --wait --build osu.tools
-  fi
+  docker compose \
+    --project-directory ./ \
+    --profile files \
+    -f "$PROJ_DIR"/docker-compose.yml \
+    --env-file ./osu-data-docker/.env \
+    --env-file ./osu-tools-docker/.env \
+    --env-file "$ENV_PATH" \
+    up --wait --build "${SERVICES[@]}"
 }
 
 stop_docker() {
@@ -224,12 +214,26 @@ run() {
   check_overwrite "$RUN_DIR"
   select_result_dir "$RUN_DIR"
 
-  if docker ps | grep -q osu.mysql && docker ps | grep -q osu.files; then
-    CUSTOM_SERVICES=1
-    echo -e "\e[33mServices are already running, will use current services.\e[0m"
+  # If we have custom files, we just need to run the osu.tools service
+  if [ "$CUSTOM_FILES" -eq 1 ]; then
+    if docker ps | grep -q osu.tools; then
+      CUSTOM_SERVICES=1
+      echo -e "\e[33mServices are already running, will use current services.\e[0m"
+    else
+      CUSTOM_SERVICES=0
+      start_docker "$ENV_PATH" "osu.tools"
+    fi
   else
-    CUSTOM_SERVICES=0
-    start_docker "$ENV_PATH" "$CUSTOM_FILES"
+    # Else, we also need to run the osu.mysql and osu.files services
+    if docker ps | grep -q osu.mysql &&
+      docker ps | grep -q osu.files &&
+      docker ps | grep -q osu.tools; then
+      CUSTOM_SERVICES=1
+      echo -e "\e[33mServices are already running, will use current services.\e[0m"
+    else
+      CUSTOM_SERVICES=0
+      start_docker "$ENV_PATH" ""
+    fi
   fi
 
   if [ "$CUSTOM_FILES" -eq 0 ]; then
