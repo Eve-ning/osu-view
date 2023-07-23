@@ -80,6 +80,7 @@ select_result_dir() {
     while [ ! -d "$EXT_FILES_DIR" ]; do
       echo "$EXT_FILES_DIR" is not a directory
       read -r -p "Your *.osu files directory: " EXT_FILES_DIR
+      ((r++)) && ((r==10)) && exit 1
     done
     echo "Found $(find "$EXT_FILES_DIR" -name "*.osu" | wc -l) *.osu files in $FILES_DIR"
     FILES_DIR="$RUN_DIR"/files
