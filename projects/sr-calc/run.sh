@@ -98,14 +98,26 @@ start_docker() {
   local ENV_PATH="$1"
 
   echo "Starting Services"
-  docker compose \
-    --project-directory ./ \
-    --profile files \
-    -f "$PROJ_DIR"/docker-compose.yml \
-    --env-file ./osu-data-docker/.env \
-    --env-file ./osu-tools-docker/.env \
-    --env-file "$ENV_PATH" \
-    up --wait --build
+  if [ $CUSTOM_FILES -eq 1 ]; then
+    docker compose \
+      --project-directory ./ \
+      --profile files \
+      -f "$PROJ_DIR"/docker-compose.yml \
+      --env-file ./osu-data-docker/.env \
+      --env-file ./osu-tools-docker/.env \
+      --env-file "$ENV_PATH" \
+      up --wait --build osu.tools
+  else
+    docker compose \
+      --project-directory ./ \
+      --profile files \
+      -f "$PROJ_DIR"/docker-compose.yml \
+      --env-file ./osu-data-docker/.env \
+      --env-file ./osu-tools-docker/.env \
+      --env-file "$ENV_PATH" \
+      up --wait --build
+  fi
+
 }
 
 # ENV_PATH is the path to the .env file fed to docker compose
