@@ -18,9 +18,8 @@ jobs:
           submodules: 'true'
 
       - name: 1. Runs initial, new test
-        working-directory: projects/sr-calc/
         run: |
-          ./run.sh -r mytest \
+          ./projects/sr-calc/run.sh -r mytest \
                    -y https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_performance_mania_top_1000.tar.bz2 \
                    -z https://github.com/Eve-ning/osu-data-docker/raw/master/rsc/YYYY_MM_DD_osu_files.tar.bz2 \
                    -q "SELECT 1 UNION SELECT 2 UNION SELECT 3;" \

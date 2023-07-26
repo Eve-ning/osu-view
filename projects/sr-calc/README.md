@@ -19,10 +19,6 @@ Usage:
   run.sh [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-q SQL_QUERY] \
        [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
 
-Description:
-  Depending on the use case, some options are required.
-  For example, if you're using 'sr-calc' using a MySQL, then SQL_QUERY is expected.
-
 Options:
   -h     Display this help.
   -v     MODE_VERSION: E.g. 'osu_top_1000'.
@@ -47,7 +43,7 @@ Options:
 
 Basic usage
 
-Navigate to `projects/sr-calc/`
+Navigate to `projects/sr-calc/` (you can also run `./project/sr-calc/run.sh` from the project directory)
 
 ```bash
 ./run.sh -v mania_top_1000

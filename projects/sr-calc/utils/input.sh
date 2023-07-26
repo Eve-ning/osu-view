@@ -9,9 +9,53 @@ Usage:
   $(basename "$0") [-y DATABASE_URL] [-z FILES_URL] [-r RUN_TAG] [-q SQL_QUERY] \\
        [-o OSU_GIT] [-o OSU_GIT_BRANCH] [-t OSU_TOOLS_GIT] [-t OSU_TOOLS_GIT_BRANCH] [-e ENV_PATH]
 
-Description:
   Depending on the use case, some options are required.
-  For example, if you're using 'sr-calc' using a MySQL, then SQL_QUERY is expected.
+  E.g. if you're using 'sr-calc' using a MySQL query, then SQL_QUERY is expected.
+
+Description:
+  This script executes the osu-tools .NET  difficulty  module on queried beatmaps.
+
+  There are 4 important layers in this script, followed by the options:
+
+              +-------------------------------------------------+-------------------------------------+
+              | Description                                     | Options                             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | DATA      | MySQL database and osu files.                   | MODE_VERSION, DATA_DATE             |
+  |           |                                                 | DATABASE_URL, FILES_URL             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | QUERY     | SQL_QUERY used to extract osu files from the db | SQL_QUERY                           |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | INFERENCE | osu-tools .NET  difficulty  module.             | OSU_TOOLS_GIT, OSU_TOOLS_GIT_BRANCH |
+  |           | osu repository                                  | OSU_GIT, OSU_GIT_BRANCH             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | OUTPUT    | output directory for the run.                   | RUN_TAG                             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+
+  These 4 layers are decoupled, you can use completely different
+  - DB and Files URLs
+  - SQL Queries
+  - osu-tools .NET  difficulty  module on different osu repos
+  - Output directories
+
+  See the 'Examples' section for more details.
+
+Outputs:
+  This script creates a directory for each run tagged with RUN_TAG (osu.view/sr-calc/[RUN_TAG])
+  The directory contains the following files:
+  - osu.view/sr-calc/[RUN_TAG]
+    - files/            : the osu files queried from the database
+      - __.osu          * Note: this dir is omitted if this run depends on an existing osu files directory
+      - ...
+    - dt.results.json   : DT difficulty results
+    - ht.results.json   : HT difficulty results
+    - nt.results.json   : NT difficulty results
+    - docker-compose.yml: Configuration for osu.mysql and osu.files
+    - .env              : Environment Variables supplied from the CLI
+    - osu-data.env      : osu-data-docker Environment Variables
+    - osu-tools.env     : osu-tools-docker Environment Variables
+    - query.sql         : the SQL_QUERY used to extract osu files from the osu.mysql DB
+
+  * Note that .env overwrites all osu-data.env and osu-tools.env variables.
 
 Options:
   -h     Display this help.
@@ -27,9 +71,9 @@ Options:
   -q     SQL_QUERY            MySQL Query to retrieve      Default: SELECT beatmap_id FROM osu_beatmaps WHERE playmode=3 AND approved=1 LIMIT 10;
 
   Use these options if you need more control
-  -y     https://data.ppy.sh Database URL. Example: https://data.ppy.sh/$(date '+%Y_%m_01')_performance_<VERSION>.tar.bz2
+  -y     https://data.ppy.sh DATABASE_URL. Example: https://data.ppy.sh/$(date '+%Y_%m_01')_performance_<VERSION>.tar.bz2
          Overrides -v and -d
-  -z     https://data.ppy.sh Files URL.    Example: https://data.ppy.sh/$(date '+%Y_%m_01')_osu_files.tar.bz2
+  -z     https://data.ppy.sh FILES_URL.    Example: https://data.ppy.sh/$(date '+%Y_%m_01')_osu_files.tar.bz2
          Overrides -d
 
 Examples:
@@ -108,7 +152,6 @@ if [ ! "$ENV_PATH" ]; then
   exit 1
 else echo -e "\e[32mOK\e[0m"; fi
 
-
 mkdir -p "$(dirname "$ENV_PATH")"
 
 echo "RUN_TAG=$RUN_TAG
@@ -122,8 +165,10 @@ OSU_TOOLS_GIT_BRANCH=$OSU_TOOLS_GIT_BRANCH" >"$ENV_PATH"
 export VERSION
 export RUN_TAG
 export DATASET_DATE
-export OSU_GIT_OPTS
-export OSU_TOOLS_GIT_OPTS
+export OSU_GIT
+export OSU_GIT_BRANCH
+export OSU_TOOLS_GIT
+export OSU_TOOLS_GIT_BRANCH
 export DB_URL
 export FILES_URL
 export ENV_PATH

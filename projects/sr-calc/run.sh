@@ -1,31 +1,13 @@
 #!/bin/bash
 
-# This script executes the .NET `difficulty` module in osu-tools on beatmaps.
-# Beatmaps evaluated can come from 3 sources
-#   1) From files in the `osu.files` service via a MySQL Query: `query.sql`
-#   2) From an external directory of *.osu files
-#   3) From an internal directory of *.osu files (from previous runs of this script).
-# The version of `osu-tools` and `osu` used depends on the `.env` file
-#
-# Usage: $ ./run.sh [RUN_TAG]
-# The tag is used to identify the run, all results will be stored in $PROJECT/osu.view/sr-calc/[RUN_TAG]/
-#
-# If the docker services are already running, this will just use those services.
-# However, note that it can cause replication issues, as we're not in control of the environment spun up.
-#
-# E.g.
-# ./run.sh my_dir
-# Will create
-# osu.view/sr-calc/my_dir/files/           The directory for all `.osu` files
-#                        /filelist.txt     The list of files in /files/ in txt
-#                        /dt.results.json  Double Time Results of `difficulty`
-#                        /nt.results.json  Normal Time "
-#                        /ht.results.json  Half Time   "
-#                        /osu-data.env     osu-data  Environment config, will not exist if custom services are used.
-#                        /osu-tools.env    osu-tools "
+# See -h for more details on the usage of this script.
 
-source ./validate.sh
+PROJ_DIR="$(dirname "$(realpath "$0")")"
+source "$PROJ_DIR"/utils/input.sh
+source "$PROJ_DIR"/utils/validate.sh
+cd "$PROJ_DIR"/../../ || exit 1
 
+# This function checks if the directory exists, and if so, asks the user if they want to overwrite it.
 check_overwrite() {
   local OVERWRITE=""
   local RUN_DIR="$1"
@@ -43,6 +25,9 @@ check_overwrite() {
   mkdir -p "$RUN_DIR"
 }
 
+# This function selects the result directory, and sets the FILES_DIR and CUSTOM_FILES variable
+# FILES_DIR is the dir where the .osu files are stored
+# CUSTOM_FILES is a boolean that is set to 1 if the user selects a custom run or files dir
 select_result_dir() {
   echo ""
   echo "Pulling a large amount of .osu files can be slow."
@@ -54,10 +39,13 @@ select_result_dir() {
   FILES_DIR=""
   CUSTOM_FILES=0
 
-  # The long find command finds all directories that have the `files` directory. This is necessary to get the files data
-  # We firstly find all directories in sr-calc which contain the `files` dir
-  # Then reverse it, so that `cut` can take the element from the back
-  # Reverse it again after cut.
+  # We're interested on listing all [RUN_TAG] with a `files` dir.
+  #   Impl: 1) Find all dirs in RUN_DIR/.. containing `files` dir
+  #         2) Reverse all paths, so `cut` can take the element from the back
+  #            E.g. /a/b/[RUN_TAG]/files -> selif/[GAT_NUR]/b/a/
+  #                                      -> cut -f 2 -> [GAT_NUR]
+  #                                      -> rev -> [RUN_TAG]
+  #         3) Feed the list to select
   select opt in "[NEW]" "[External Directory]" \
     $(find "$RUN_DIR"/.. -type d -name 'files' | rev | cut -d "/" -f 2 | rev); do
     [ -n "${opt}" ] && break
@@ -76,18 +64,21 @@ select_result_dir() {
   # If External, we'll skip the query and file copying, we'll just run difficulty on this new dir.
   elif [ "$opt" == "[External Directory]" ]; then
     echo If you use a relative directory, you are at "$(pwd)"
+
     read -r -p "Your *.osu files directory: " EXT_FILES_DIR
     while [ ! -d "$EXT_FILES_DIR" ]; do
       echo "$EXT_FILES_DIR" is not a directory
       read -r -p "Your *.osu files directory: " EXT_FILES_DIR
       ((r++)) && ((r == 10)) && exit 1
     done
+
     echo "Found $(find "$EXT_FILES_DIR" -name "*.osu" | wc -l) *.osu files in $FILES_DIR"
     FILES_DIR="$RUN_DIR"/files
-    mkdir "$FILES_DIR"
+
     echo "Copying over files from $EXT_FILES_DIR to $FILES_DIR/"
     cp "$EXT_FILES_DIR"/*.osu "$FILES_DIR"/
     CUSTOM_FILES=1
+
   # Else, we'll just use files from an existing result
   else
     FILES_DIR="$RUN_DIR/../${opt}/files"
@@ -99,24 +90,39 @@ select_result_dir() {
     fi
   fi
 
+  mkdir -p "$FILES_DIR"
 }
 
+# ENV_PATH is the path to the .env file fed to docker compose
 start_docker() {
   local ENV_PATH="$1"
 
   echo "Starting Services"
-  docker compose \
-    --project-directory ./ \
-    --profile files \
-    -f "$PROJ_DIR"/docker-compose.yml \
-    --env-file ./osu-data-docker/.env \
-    --env-file ./osu-tools-docker/.env \
-    --env-file "$ENV_PATH" \
-    up --wait --build
+  if [ $CUSTOM_FILES -eq 1 ]; then
+    docker compose \
+      --project-directory ./ \
+      --profile files \
+      -f "$PROJ_DIR"/docker-compose.yml \
+      --env-file ./osu-data-docker/.env \
+      --env-file ./osu-tools-docker/.env \
+      --env-file "$ENV_PATH" \
+      up --wait --build osu.tools
+  else
+    docker compose \
+      --project-directory ./ \
+      --profile files \
+      -f "$PROJ_DIR"/docker-compose.yml \
+      --env-file ./osu-data-docker/.env \
+      --env-file ./osu-tools-docker/.env \
+      --env-file "$ENV_PATH" \
+      up --wait --build
+  fi
+
 }
 
+# ENV_PATH is the path to the .env file fed to docker compose
 stop_docker() {
-  local ENV_PATH=$1
+  local ENV_PATH="$1"
 
   echo "Stopping Services"
   docker compose \
@@ -129,18 +135,24 @@ stop_docker() {
     stop
 }
 
+# This function runs the query, and extracts the files from the tarball
+# This uses the get_maps.sh script from osu-data-docker
+# FILES_DIR is the dir where the .osu files are stored
 run_query() {
   local FILES_DIR="$1"
-  mkdir -p "$FILES_DIR"
   ./osu-data-docker/scripts/get_maps.sh -q "$SQL_QUERY" -o ./"$FILES_DIR"/files.tar.bz2
   tar -xjf ./"$FILES_DIR"/files.tar.bz2 -C ./"$FILES_DIR"/
 }
 
+# This function copies the configs to the run dir
+# CUSTOM_FILES is a boolean that is set to 1 if the user selects a custom run or files dir
+# RUN_DIR is the dir where the configs are stored
+# PROJ_DIR is the
+# ENV_PATH is the path to the .env file fed to docker compose
 copy_configs() {
   local CUSTOM_FILES="$1"
   local RUN_DIR="$2"
-  local PROJ_DIR="$3"
-  local ENV_PATH="$4"
+  local ENV_PATH="$3"
 
   if [ "$CUSTOM_FILES" -eq 0 ]; then
     echo "$SQL_QUERY" >"$RUN_DIR"/query.sql
@@ -154,9 +166,10 @@ copy_configs() {
 
 evaluate_maps() {
   local FILES_DIR="$1"
-  local NT_RESULTS_PATH="$2"
-  local DT_RESULTS_PATH="$3"
-  local HT_RESULTS_PATH="$4"
+  local RUN_DIR="$2"
+  local NT_RESULTS_PATH="$RUN_DIR"/nt.results.json
+  local DT_RESULTS_PATH="$RUN_DIR"/dt.results.json
+  local HT_RESULTS_PATH="$RUN_DIR"/ht.results.json
 
   # Evaluate beatmaps via osu.tools
   docker exec osu.tools sh -c \
@@ -176,17 +189,18 @@ evaluate_maps() {
 }
 
 run() {
+  # The following variables are set by the input.sh script
+  # VERSION, RUN_TAG, DATASET_DATE, OSU_GIT, OSU_GIT_BRANCH, OSU_TOOLS_GIT, OSU_TOOLS_GIT_BRANCH,
+  # DB_URL, FILES_URL, ENV_PATH, SQL_QUERY
+
+  # The DIR variables are relative to the project root locally, and absolute in the docker container
+  # E.g. /$RUN_DIR refers to RUN_DIR in the docker container,
+  #      ./$RUN_DIR refers to the RUN_DIR locally
+  RUN_DIR=osu.view/sr-calc/"$RUN_TAG" # RUN_DIR is where all results are stored
+  FILES_DIR=""                        # FILES_DIR is where the .osu files are stored
+
   validate_git "OSU_GIT" "$OSU_GIT" "$OSU_GIT_BRANCH"
   validate_git "OSU_TOOLS_GIT" "$OSU_TOOLS_GIT" "$OSU_TOOLS_GIT_BRANCH"
-  RUN_DIR=osu.view/sr-calc/"$RUN_TAG"
-  PROJ_DIR="$(pwd)"
-  NT_RESULTS_PATH="$RUN_DIR"/nt.results.json
-  DT_RESULTS_PATH="$RUN_DIR"/dt.results.json
-  HT_RESULTS_PATH="$RUN_DIR"/ht.results.json
-
-  echo -n -e "\e[34mNavigating to Project Home: \e[0m"
-  cd ../../
-  pwd
 
   check_overwrite "$RUN_DIR"
   select_result_dir "$RUN_DIR"
@@ -196,15 +210,13 @@ run() {
     run_query "$FILES_DIR"
   fi
 
-  evaluate_maps "$FILES_DIR" "$NT_RESULTS_PATH" "$DT_RESULTS_PATH" "$HT_RESULTS_PATH"
+  evaluate_maps "$FILES_DIR" "$RUN_DIR"
 
   echo -e "\e[34mCopying Over Configurations for Lineage\e[0m"
-  copy_configs "$CUSTOM_FILES" "$RUN_DIR" "$PROJ_DIR" "$ENV_PATH"
+  copy_configs "$CUSTOM_FILES" "$RUN_DIR" "$ENV_PATH"
   stop_docker "$ENV_PATH"
 
   echo -e "\e[32mCompleted.\e[0m"
 }
-
-source ./input.sh
 
 run
