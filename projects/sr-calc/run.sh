@@ -130,23 +130,10 @@ stop_docker() {
 }
 
 run_query() {
-  # Pull file list according to query
-  local FILELIST_PATH="$1"
-  local FILES_DIR="$2"
-  local MYSQL_PASSWORD="$3"
-  docker exec osu.mysql mysql -u root --password="$MYSQL_PASSWORD" \
-    -D osu -N -e "$SQL_QUERY" \
-    >"$FILELIST_PATH"
-
-  local OSU_FILES_DIRNAME="${DATASET_DATE}_osu_files"
-
-  # Create a temporary directory to copy all files to send to tar.
-  echo "Moving Files to /$FILES_DIR/"
-  docker exec osu.files sh -c \
-    'mkdir -p /'"$FILES_DIR"'/;
-    while read beatmap_id;
-    do cp /osu.files/'"$OSU_FILES_DIRNAME"'/"$beatmap_id".osu /'"$FILES_DIR"'/"$beatmap_id".osu;
-    done < /'"$FILELIST_PATH"';'
+  local FILES_DIR="$1"
+  mkdir -p "$FILES_DIR"
+  ./osu-data-docker/scripts/get_maps.sh -q "$SQL_QUERY" -o ./"$FILES_DIR"/files.tar.bz2
+  tar -xjf ./"$FILES_DIR"/files.tar.bz2 -C ./"$FILES_DIR"/
 }
 
 copy_configs() {
@@ -193,8 +180,6 @@ run() {
   validate_git "OSU_TOOLS_GIT" "$OSU_TOOLS_GIT" "$OSU_TOOLS_GIT_BRANCH"
   RUN_DIR=osu.view/sr-calc/"$RUN_TAG"
   PROJ_DIR="$(pwd)"
-  MYSQL_PASSWORD="p@ssw0rd1"
-  FILELIST_PATH="$RUN_DIR"/filelist.txt
   NT_RESULTS_PATH="$RUN_DIR"/nt.results.json
   DT_RESULTS_PATH="$RUN_DIR"/dt.results.json
   HT_RESULTS_PATH="$RUN_DIR"/ht.results.json
@@ -208,7 +193,7 @@ run() {
   start_docker "$ENV_PATH" "osu.mysql" "osu.files" "osu.tools"
 
   if [ "$CUSTOM_FILES" -eq 0 ]; then
-    run_query "$FILELIST_PATH" "$FILES_DIR" "$MYSQL_PASSWORD"
+    run_query "$FILES_DIR"
   fi
 
   evaluate_maps "$FILES_DIR" "$NT_RESULTS_PATH" "$DT_RESULTS_PATH" "$HT_RESULTS_PATH"
