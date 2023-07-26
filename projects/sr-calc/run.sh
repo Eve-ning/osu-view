@@ -2,7 +2,7 @@
 
 # See -h for more details on the usage of this script.
 
-PROJ_DIR="$(dirname "$0")"
+PROJ_DIR="$(dirname "$(realpath "$0")")"
 source "$PROJ_DIR"/utils/input.sh
 source "$PROJ_DIR"/utils/validate.sh
 cd "$PROJ_DIR"/../../ || exit 1
