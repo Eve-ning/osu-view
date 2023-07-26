@@ -16,14 +16,20 @@ Description:
   This script executes the osu-tools .NET  difficulty  module on queried beatmaps.
 
   There are 4 important layers in this script, followed by the options:
-  1) DATA     : the MySQL database and osu files.
-              : MODE_VERSION, DATA_DATE | DATABASE_URL, FILES_URL
-  2) QUERY    : the SQL_QUERY used to extract osu files from the database
-              : SQL_QUERY
-  3) INFERENCE: the osu-tools .NET  difficulty  module.
-              : OSU_GIT, OSU_GIT_BRANCH, OSU_TOOLS_GIT, OSU_TOOLS_GIT_BRANCH
-  4) OUTPUT   : the output directory for the run.
-              : RUN_TAG
+
+              +-------------------------------------------------+-------------------------------------+
+              | Description                                     | Options                             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | DATA      | MySQL database and osu files.                   | MODE_VERSION, DATA_DATE             |
+  |           |                                                 | DATABASE_URL, FILES_URL             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | QUERY     | SQL_QUERY used to extract osu files from the db | SQL_QUERY                           |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | INFERENCE | osu-tools .NET  difficulty  module.             | OSU_TOOLS_GIT, OSU_TOOLS_GIT_BRANCH |
+  |           | osu repository                                  | OSU_GIT, OSU_GIT_BRANCH             |
+  +-----------+-------------------------------------------------+-------------------------------------+
+  | OUTPUT    | output directory for the run.                   | RUN_TAG                             |
+  +-----------+-------------------------------------------------+-------------------------------------+
 
   These 4 layers are decoupled, you can use completely different
   - DB and Files URLs
