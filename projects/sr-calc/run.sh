@@ -106,7 +106,15 @@ start_docker() {
       --env-file ./osu-data-docker/.env \
       --env-file ./osu-tools-docker/.env \
       --env-file "$ENV_PATH" \
-      up --wait --build osu.tools
+     build --no-cache osu.tools
+    docker compose \
+      --project-directory ./ \
+      --profile files \
+      -f "$PROJ_DIR"/docker-compose.yml \
+      --env-file ./osu-data-docker/.env \
+      --env-file ./osu-tools-docker/.env \
+      --env-file "$ENV_PATH" \
+      up --wait osu.tools
   else
     docker compose \
       --project-directory ./ \
@@ -115,7 +123,15 @@ start_docker() {
       --env-file ./osu-data-docker/.env \
       --env-file ./osu-tools-docker/.env \
       --env-file "$ENV_PATH" \
-      up --wait --build
+     build --no-cache
+    docker compose \
+      --project-directory ./ \
+      --profile files \
+      -f "$PROJ_DIR"/docker-compose.yml \
+      --env-file ./osu-data-docker/.env \
+      --env-file ./osu-tools-docker/.env \
+      --env-file "$ENV_PATH" \
+      up --wait
   fi
 
 }
