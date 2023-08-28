@@ -28,6 +28,4 @@ services:
       - ./osu.view:/osu.view
 
 volumes:
-  osu.mysql.vol:
-  osu.mysql.dl.vol:
-  osu.files.vol:
+  osu.mysql.init.vol:
