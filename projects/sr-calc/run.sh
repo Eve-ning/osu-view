@@ -221,6 +221,7 @@ run() {
   check_overwrite "$RUN_DIR"
   select_result_dir "$RUN_DIR"
   start_docker "$ENV_PATH" "osu.mysql" "osu.files" "osu.tools"
+  sleep 10
 
   if [ "$CUSTOM_FILES" -eq 0 ]; then
     run_query "$FILES_DIR"
